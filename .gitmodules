@@ -1,0 +1,15 @@
+[submodule "@openzeppelin"]
+	path = @openzeppelin
+	url = https://github.com/brandonlehmann/openzeppelin-contracts
+[submodule "@solidity-lib"]
+	path = @solidity-lib
+	url = https://github.com/brandonlehmann/solidity-lib
+[submodule "@uniswap-v3-core"]
+	path = @uniswap-v3-core
+	url = https://github.com/brandonlehmann/v3-core
+[submodule "@uniswap-v2-core"]
+	path = @uniswap-v2-core
+	url = https://github.com/brandonlehmann/v2-core
+[submodule "@chainlink"]
+	path = @chainlink
+	url = https://github.com/brandonlehmann/chainlink
