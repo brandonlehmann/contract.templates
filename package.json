@@ -46,7 +46,8 @@
     "lint:sol": "solhint -f table contracts/**/*.sol",
     "fix-style": "yarn fix-ts-style && yarn fix-sol-style",
     "fix-sol-style": "prettier --write ./contracts/**/*.sol",
-    "fix-ts-style": "./node_modules/.bin/eslint --fix scripts/**/*.ts test/**/*.ts hardhat.config.ts"
+    "fix-ts-style": "./node_modules/.bin/eslint --fix scripts/**/*.ts test/**/*.ts hardhat.config.ts",
+    "test": "npx hardhat test"
   },
   "repository": {
     "type": "git",
