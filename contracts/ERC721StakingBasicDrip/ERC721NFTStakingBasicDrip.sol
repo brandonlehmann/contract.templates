@@ -54,8 +54,11 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     // holds the list of permitted NFTs
     EnumerableSet.AddressSet private permittedNFTs;
 
-    // holds the list of permitted reward tokens
+    // holds the list of currently permitted reward tokens
     EnumerableSet.AddressSet private permittedRewardTokens;
+
+    // holds the list of all permitted reward tokens (active or not)
+    EnumerableSet.AddressSet private allRewardTokens;
 
     // holds the reward token drip rate
     mapping(address => uint256) public rewardTokenDripRate;
@@ -81,10 +84,13 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     // holds the mapping of stakers to their staking ids
     mapping(address => EnumerableSet.Bytes32Set) private userStakes;
 
+    // holds the mapping of the staker's reward payments
+    mapping(address => mapping(address => uint256)) private userRewards;
+
     // holds the number of staked NFTs per reward token
     mapping(address => uint256) public stakesPerRewardToken;
 
-    // holds the amount of rewards paid by reward token
+    // holds the amount of rewards paid by reward token for all users
     mapping(address => uint256) public rewardsPaid;
 
     // holds the address of the wallet that contains the staking rewards
@@ -151,6 +157,25 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         }
 
         return stakes;
+    }
+
+    /**
+     * @dev returns a paired set of arrays that gives the history of
+     * all rewards paid to the caller regardless of if the contract
+     * currently permits the reward token
+     */
+    function rewardHistory()
+        public
+        view
+        returns (address[] memory _rewardTokens, uint256[] memory _rewardsPaid)
+    {
+        _rewardTokens = allRewardTokens.values();
+
+        _rewardsPaid = new uint256[](allRewardTokens.length());
+
+        for (uint256 i = 0; i < _rewardTokens.length; i++) {
+            _rewardsPaid[i] = userRewards[_msgSender()][_rewardTokens[i]];
+        }
     }
 
     /**
@@ -288,14 +313,20 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // update the last claimed timestamp
         stakedNFTs[stakeId].lastClaimTimestamp = block.timestamp;
 
+        // add the reward amount to the total amount for the reward token that we have paid out
+        rewardsPaid[address(info.rewardToken)] += _claimableAmount;
+
+        // add the reward amount to the users individual tracking of what we've paid out
+        userRewards[_msgSender()][
+            address(info.rewardToken)
+        ] += _claimableAmount;
+
         // transfer the claimable rewards to the caller
         info.rewardToken.safeTransferFrom(
             rewardWallet,
             _msgSender(),
             _claimableAmount
         );
-
-        rewardsPaid[address(info.rewardToken)] += _claimableAmount;
 
         emit ClaimRewards(stakeId, _msgSender(), _claimableAmount);
     }
@@ -392,6 +423,11 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // pull the staked NFT info
         StakedNFT memory info = stakedNFTs[stakeId];
 
+        // if the user has a claimable balance, claim it upon unstake
+        if (_claimableBalance(stakeId) != 0) {
+            _claim(stakeId);
+        }
+
         // delete the record
         delete stakedNFTs[stakeId];
 
@@ -423,6 +459,13 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     }
 
     /**
+     * @dev returns an array of the permitted reward tokens
+     */
+    function rewardTokens() public view returns (address[] memory) {
+        return permittedRewardTokens.values();
+    }
+
+    /**
      * @dev adds the specified token as a permitted reward token at the specified drip rate
      *
      * WARNING: amountOfTokenPerDayPerNFT is expressed as the amount of the token to
@@ -442,6 +485,14 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         );
 
         permittedRewardTokens.add(token);
+
+        // keeps track of all tokens that have been permitted in the past
+        // so that we can track all payouts for all rewards tokens for users
+        // as such, we only want to add it to the set once in case it is added
+        // again later after it has been removed
+        if (!allRewardTokens.contains(token)) {
+            allRewardTokens.add(token);
+        }
 
         // set the drip rate based upon the amount released per day divided by the seconds in a day
         rewardTokenDripRate[token] = amountOfTokenPerDayPerNFT / 24 hours;
@@ -517,6 +568,13 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
 
     function isPermittedNFT(address nftContract) public view returns (bool) {
         return permittedNFTs.contains(nftContract);
+    }
+
+    /**
+     * @dev returns an array of the permitted NFTs
+     */
+    function nfts() public view returns (address[] memory) {
+        return permittedNFTs.values();
     }
 
     /**

@@ -227,5 +227,12 @@ const advanceTime = async (days: number) => {
 
             assert(status.length === 0);
         });
+
+        it('Check Wallet2 total rewards', async () => {
+            const [, rewards] = await ERC721NFTStakingBasicDrip.connect(wallet2)
+                .rewardHistory();
+
+            assert(!rewards[0].isZero());
+        });
     });
 })();
