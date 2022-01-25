@@ -137,7 +137,11 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
 
         _runRatePerDay = _runRatePerSecond * 24 hours;
 
-        _runwaySeconds = _balance / _runRatePerSecond;
+        if (_runRatePerSecond != 0) {
+            _runwaySeconds = _balance / _runRatePerSecond;
+        } else {
+            _runwaySeconds = type(uint256).max;
+        }
 
         _runwayDays = _runwaySeconds / 24 hours;
     }

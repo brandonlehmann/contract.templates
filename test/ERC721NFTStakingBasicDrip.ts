@@ -79,6 +79,13 @@ const advanceTime = async (days: number) => {
                 .catch(() => assert(false));
         });
 
+        it('Check Runway Status', async () => {
+            const runway = await ERC721NFTStakingBasicDrip.runway(ERC20.address)
+                .catch(() => assert(false));
+
+            assert(runway._runRatePerSecond.isZero());
+        });
+
         it('Wallet2 cannot stake yet', async () => {
             await ERC721NFTStakingBasicDrip.connect(wallet2)
                 .stake(ERC721.address, 1, ERC20.address)
@@ -104,6 +111,14 @@ const advanceTime = async (days: number) => {
                 .catch(() => assert(false));
         });
 
+        it('Wallet2 does not have staked NFTs', async () => {
+            const nfts = await ERC721NFTStakingBasicDrip.connect(wallet2)
+                .staked()
+                .catch(() => assert(false));
+
+            assert(nfts.length === 0);
+        });
+
         it('Wallet2 can stake', async () => {
             await ERC721NFTStakingBasicDrip.connect(wallet2)
                 .stake(ERC721.address, 1, ERC20.address)
@@ -111,6 +126,28 @@ const advanceTime = async (days: number) => {
                     console.log(e.toString());
                     assert(false);
                 });
+        });
+
+        it('Wallet2 has staked NFTs', async () => {
+            const nfts = await ERC721NFTStakingBasicDrip.connect(wallet2)
+                .staked()
+                .catch(() => assert(false));
+
+            assert(nfts.length !== 0);
+        });
+
+        it('Check Runway Status', async () => {
+            const runway = await ERC721NFTStakingBasicDrip.runway(ERC20.address)
+                .catch(() => assert(false));
+
+            assert(!runway._runRatePerSecond.isZero());
+        });
+
+        it('Wallet2 has stake ids', async () => {
+            const ids = await ERC721NFTStakingBasicDrip.stakeIds(wallet2.address)
+                .catch(() => assert(false));
+
+            assert(ids.length !== 0);
         });
 
         it('Wallet2 Claimable should be 0', async () => {
@@ -156,18 +193,27 @@ const advanceTime = async (days: number) => {
             lastClaim = claim;
         });
 
+        it('Wallet2 can single claim by stake id', async () => {
+            const ids = await ERC721NFTStakingBasicDrip.stakeIds(wallet2.address)
+                .catch(() => assert(false));
+
+            await ERC721NFTStakingBasicDrip.connect(wallet2)
+                .claim(ids[0])
+                .catch(() => assert(false));
+        });
+
         it('Advance time by a day', async () => {
             await advanceTime(1)
                 .catch(() => assert(false));
         });
 
-        it('Wallet2 claimable balance should increase', async () => {
+        it('Wallet2 claimable balance should be less than the last', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
                 .claimable();
 
             const claim = status[0].amount;
 
-            assert(claim.gt(lastClaim));
+            assert(claim.lt(lastClaim));
 
             lastClaim = claim;
         });
@@ -233,6 +279,28 @@ const advanceTime = async (days: number) => {
                 .rewardHistory();
 
             assert(!rewards[0].isZero());
+        });
+
+        it('Wallet2 does not have staked NFTs', async () => {
+            const nfts = await ERC721NFTStakingBasicDrip.connect(wallet2)
+                .staked()
+                .catch(() => assert(false));
+
+            assert(nfts.length === 0);
+        });
+
+        it('Wallet2 has stake ids', async () => {
+            const ids = await ERC721NFTStakingBasicDrip.stakeIds(wallet2.address)
+                .catch(() => assert(false));
+
+            assert(ids.length === 0);
+        });
+
+        it('Check Runway Status', async () => {
+            const runway = await ERC721NFTStakingBasicDrip.runway(ERC20.address)
+                .catch(() => assert(false));
+
+            assert(runway._runRatePerSecond.isZero());
         });
     });
 })();
