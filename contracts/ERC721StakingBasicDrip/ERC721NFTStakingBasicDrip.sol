@@ -356,7 +356,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
      *
      * Requirements:
      *
-     * - contract must be approved to transfer the NFT
+     * - contract must be approved for all NFTs of the owner in the NFT contract
      */
     function stake(
         IERC721 nftContract,
@@ -372,7 +372,8 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
             "Reward token is not permitted"
         );
         require(
-            nftContract.getApproved(tokenId) == address(this),
+            nftContract.isApprovedForAll(_msgSender(), address(this)) ||
+                nftContract.getApproved(tokenId) == address(this),
             "not permitted to take ownership of NFT for staking"
         );
 
