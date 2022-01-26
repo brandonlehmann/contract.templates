@@ -147,11 +147,11 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     }
 
     /**
-     * @dev returns an array of all staked NFT for the caller
+     * @dev returns an array of all staked NFT for the specified account
      */
-    function staked() public view returns (StakedNFT[] memory) {
+    function staked(address account) public view returns (StakedNFT[] memory) {
         // retrieve all of the stake ids for the caller
-        bytes32[] memory ids = stakeIds(_msgSender());
+        bytes32[] memory ids = stakeIds(account);
 
         // construct the temporary staked information
         StakedNFT[] memory stakes = new StakedNFT[](ids.length);
@@ -165,10 +165,10 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
 
     /**
      * @dev returns a paired set of arrays that gives the history of
-     * all rewards paid to the caller regardless of if the contract
+     * all rewards paid to account regardless of if the contract
      * currently permits the reward token
      */
-    function rewardHistory()
+    function rewardHistory(address account)
         public
         view
         returns (address[] memory _rewardTokens, uint256[] memory _rewardsPaid)
@@ -178,7 +178,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         _rewardsPaid = new uint256[](allRewardTokens.length());
 
         for (uint256 i = 0; i < _rewardTokens.length; i++) {
-            _rewardsPaid[i] = userRewards[_msgSender()][_rewardTokens[i]];
+            _rewardsPaid[i] = userRewards[account][_rewardTokens[i]];
         }
     }
 
@@ -245,11 +245,15 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     }
 
     /**
-     * @dev returns all of the claimable stakes for the caller
+     * @dev returns all of the claimable stakes for the specified account
      */
-    function claimable() public view returns (ClaimableInfo[] memory) {
+    function claimable(address account)
+        public
+        view
+        returns (ClaimableInfo[] memory)
+    {
         // retrieve all of the stake ids for the caller
-        bytes32[] memory ids = stakeIds(_msgSender());
+        bytes32[] memory ids = stakeIds(account);
 
         // construct the temporary claimable information
         ClaimableInfo[] memory claims = new ClaimableInfo[](ids.length);
@@ -279,11 +283,11 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     }
 
     /**
-     * @dev claims all of the available stakes for the caller
+     * @dev claims all of the available stakes for the specified account
      */
-    function claimAll() public {
+    function claimAll(address account) public {
         // retrieve all of the stake ids for the caller
-        bytes32[] memory ids = stakeIds(_msgSender());
+        bytes32[] memory ids = stakeIds(account);
 
         // loop through all of the caller's stake ids
         for (uint256 i = 0; i < ids.length; i++) {
@@ -298,11 +302,6 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
      * @dev internal method called when claiming staking rewards
      */
     function _claim(bytes32 stakeId) internal {
-        require(
-            stakedNFTs[stakeId].owner == _msgSender(),
-            "not the owner of the specified stake id"
-        );
-
         StakedNFT memory info = stakedNFTs[stakeId];
 
         // get the claimable balance for this stake id
@@ -321,18 +320,16 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         rewardsPaid[address(info.rewardToken)] += _claimableAmount;
 
         // add the reward amount to the users individual tracking of what we've paid out
-        userRewards[_msgSender()][
-            address(info.rewardToken)
-        ] += _claimableAmount;
+        userRewards[info.owner][address(info.rewardToken)] += _claimableAmount;
 
         // transfer the claimable rewards to the caller
         info.rewardToken.safeTransferFrom(
             rewardWallet,
-            _msgSender(),
+            info.owner,
             _claimableAmount
         );
 
-        emit ClaimRewards(stakeId, _msgSender(), _claimableAmount);
+        emit ClaimRewards(stakeId, info.owner, _claimableAmount);
     }
 
     /****** STAKING METHODS ******/
@@ -436,7 +433,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         delete stakedNFTs[stakeId];
 
         // delete the stake ID from the user's tracking
-        userStakes[_msgSender()].remove(stakeId);
+        userStakes[info.owner].remove(stakeId);
 
         // decrement the number of stakes for the given reward token
         stakesPerRewardToken[address(info.rewardToken)] -= 1;
@@ -444,7 +441,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // transfer the NFT back to the user
         info.nftContract.safeTransferFrom(
             address(this),
-            _msgSender(),
+            info.owner,
             info.tokenId
         );
 

@@ -113,7 +113,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 does not have staked NFTs', async () => {
             const nfts = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .staked()
+                .staked(wallet2.address)
                 .catch(() => assert(false));
 
             assert(nfts.length === 0);
@@ -130,7 +130,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 has staked NFTs', async () => {
             const nfts = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .staked()
+                .staked(wallet2.address)
                 .catch(() => assert(false));
 
             assert(nfts.length !== 0);
@@ -152,7 +152,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 Claimable should be 0', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimable();
+                .claimable(wallet2.address);
 
             const claim = status[0].amount;
 
@@ -168,7 +168,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 Claimable should be 0', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimable();
+                .claimable(wallet2.address);
 
             const claim = status[0].amount;
 
@@ -184,7 +184,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 should have claimable balance', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimable();
+                .claimable(wallet2.address);
 
             const claim = status[0].amount;
 
@@ -209,7 +209,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 claimable balance should be less than the last', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimable();
+                .claimable(wallet2.address);
 
             const claim = status[0].amount;
 
@@ -220,7 +220,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 can claim all', async () => {
             await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimAll()
+                .claimAll(wallet2.address)
                 .catch(() => assert(false));
 
             const balance = await ERC20.balanceOf(wallet2.address);
@@ -230,7 +230,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 Claimable should be 0', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimable();
+                .claimable(wallet2.address);
 
             const claim = status[0].amount;
 
@@ -246,7 +246,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 claimable balance should increase', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimable();
+                .claimable(wallet2.address);
 
             const claim = status[0].amount;
 
@@ -257,7 +257,7 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 should be able to unstake', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimable();
+                .claimable(wallet2.address);
 
             await ERC721NFTStakingBasicDrip.connect(wallet2)
                 .unstake(status[0].stakeId)
@@ -269,21 +269,21 @@ const advanceTime = async (days: number) => {
 
         it('Wallet2 should have no remaining stakes', async () => {
             const status = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .claimable();
+                .claimable(wallet2.address);
 
             assert(status.length === 0);
         });
 
         it('Check Wallet2 total rewards', async () => {
             const [, rewards] = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .rewardHistory();
+                .rewardHistory(wallet2.address);
 
             assert(!rewards[0].isZero());
         });
 
         it('Wallet2 does not have staked NFTs', async () => {
             const nfts = await ERC721NFTStakingBasicDrip.connect(wallet2)
-                .staked()
+                .staked(wallet2.address)
                 .catch(() => assert(false));
 
             assert(nfts.length === 0);
