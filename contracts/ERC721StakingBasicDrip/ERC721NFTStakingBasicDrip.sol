@@ -64,6 +64,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     mapping(address => uint256) public rewardTokenDripRate;
 
     struct StakedNFT {
+        bytes32 stakeId; // the stake id of the stake
         address owner; // the owner of the NFT
         IERC721 nftContract; // the ERC721 contract for which the NFT belongs
         uint256 tokenId; // the token ID staked
@@ -389,6 +390,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
 
         // add the stake Id record
         stakedNFTs[stakeId] = StakedNFT({
+            stakeId: stakeId,
             owner: _msgSender(),
             nftContract: nftContract,
             tokenId: tokenId,
