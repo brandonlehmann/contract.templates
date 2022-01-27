@@ -427,11 +427,6 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // pull the staked NFT info
         StakedNFT memory info = stakedNFTs[stakeId];
 
-        // if the user has a claimable balance, claim it upon unstake
-        if (_claimableBalance(stakeId) != 0) {
-            _claim(stakeId);
-        }
-
         // delete the record
         delete stakedNFTs[stakeId];
 
