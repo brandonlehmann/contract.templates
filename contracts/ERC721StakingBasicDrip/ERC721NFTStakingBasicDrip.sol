@@ -101,7 +101,10 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     uint256 public MINIMUM_STAKING_TIME_FOR_REWARDS;
 
     constructor(address _rewardWallet) {
-        rewardWallet = _rewardWallet;
+        // if we specify a null address for the reward wallet, then we'll use ourself
+        rewardWallet = (_rewardWallet != address(0))
+            ? _rewardWallet
+            : address(this);
 
         MINIMUM_STAKING_TIME_FOR_REWARDS = 24 hours;
 
@@ -195,9 +198,11 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
      */
     function setRewardWallet(address wallet) public onlyOwner {
         address old = rewardWallet;
-        rewardWallet = wallet;
 
-        emit RewardWalletChanged(old, wallet);
+        // if we specify a null address for the reward wallet, then we'll use ourself
+        rewardWallet = (wallet != address(0)) ? wallet : address(this);
+
+        emit RewardWalletChanged(old, rewardWallet);
     }
 
     /**
@@ -216,6 +221,13 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         MINIMUM_STAKING_TIME_FOR_REWARDS = minimumStakingTime;
 
         emit MinimumStakingTimeChanged(old, minimumStakingTime);
+    }
+
+    /**
+     * @dev sends the amount of the token specified from the contract to the caller
+     */
+    function withdraw(IERC20 token, uint256 amount) public onlyOwner {
+        token.safeTransfer(_msgSender(), amount);
     }
 
     /****** STAKING REWARD CLAIMING METHODS ******/
@@ -292,10 +304,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
 
         // loop through all of the caller's stake ids
         for (uint256 i = 0; i < ids.length; i++) {
-            // only try to claim if they have a claimable balance (saves gas)
-            if (_claimableBalance(ids[i]) != 0) {
-                _claim(ids[i]); // process the claim
-            }
+            _claim(ids[i]); // process the claim
         }
     }
 
@@ -308,11 +317,20 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // get the claimable balance for this stake id
         uint256 _claimableAmount = _claimableBalance(stakeId);
 
-        require(
-            info.rewardToken.allowance(rewardWallet, address(this)) >=
-                _claimableAmount,
-            "contract not authorized for claimable amount, contact the team"
-        );
+        // if they have nothing to claim, return early (saves gas)
+        if (_claimableAmount == 0) {
+            return;
+        }
+
+        // if we are to pull funds from a reward wallet and it doesn't have permission
+        // to use those funds then let's go ahead and return
+        if (
+            rewardWallet != address(this) &&
+            info.rewardToken.allowance(rewardWallet, address(this)) <
+            _claimableAmount
+        ) {
+            return;
+        }
 
         // update the last claimed timestamp
         stakedNFTs[stakeId].lastClaimTimestamp = block.timestamp;
@@ -323,12 +341,18 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // add the reward amount to the users individual tracking of what we've paid out
         userRewards[info.owner][address(info.rewardToken)] += _claimableAmount;
 
-        // transfer the claimable rewards to the caller
-        info.rewardToken.safeTransferFrom(
-            rewardWallet,
-            info.owner,
-            _claimableAmount
-        );
+        if (rewardWallet != address(this)) {
+            // transfer the claimable rewards to the owner from the reward wallet
+            info.rewardToken.safeTransferFrom(
+                rewardWallet,
+                info.owner,
+                _claimableAmount
+            );
+        } else {
+            // else, transfer the rewards to the owner from the balance
+            // of the token held by the contract
+            info.rewardToken.safeTransfer(info.owner, _claimableAmount);
+        }
 
         emit ClaimRewards(stakeId, info.owner, _claimableAmount);
     }
@@ -419,13 +443,16 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
      * @dev allows the user to unstake their NFT using the specified stake ID
      */
     function unstake(bytes32 stakeId) public {
-        require(
+        require( // this also implicitly requires that the stake id exists
             stakedNFTs[stakeId].owner == _msgSender(),
             "not the owner of the specified stake id"
         );
 
         // pull the staked NFT info
         StakedNFT memory info = stakedNFTs[stakeId];
+
+        // claim before unstake
+        _claim(stakeId);
 
         // delete the record
         delete stakedNFTs[stakeId];
