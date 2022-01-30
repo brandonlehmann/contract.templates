@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "../../@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 interface IPaymentSplitter {
+    function initialize() external;
+
     function initialize(address[] memory payees, uint256[] memory shares_)
         external;
+
+    function addPayee(address payee_, uint256 shares_) external;
 
     function count() external view returns (uint256);
 
@@ -13,13 +15,13 @@ interface IPaymentSplitter {
 
     function totalReleased() external view returns (uint256);
 
-    function totalReleased(IERC20 token) external view returns (uint256);
+    function totalReleased(address token) external view returns (uint256);
 
     function shares(address account) external view returns (uint256);
 
     function released(address account) external view returns (uint256);
 
-    function released(IERC20 token, address account)
+    function released(address token, address account)
         external
         view
         returns (uint256);
@@ -28,12 +30,16 @@ interface IPaymentSplitter {
 
     function pending(address account) external view returns (uint256);
 
-    function pending(IERC20 token, address account)
+    function pending(address token, address account)
         external
         view
         returns (uint256);
 
-    function release(address payable account) external;
+    function releaseAll() external;
 
-    function release(IERC20 token, address account) external;
+    function releaseAll(address token) external;
+
+    function release(address account) external;
+
+    function release(address token, address account) external;
 }

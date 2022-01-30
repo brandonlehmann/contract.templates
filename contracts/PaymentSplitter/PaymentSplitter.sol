@@ -3,8 +3,8 @@ pragma solidity ^0.8.10;
 
 // OpenZeppelin Contracts v4.4.1 (finance/PaymentSplitter.sol)
 
+import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../@openzeppelin/contracts/utils/Context.sol";
 import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/IPaymentSplitter.sol";
 
@@ -25,11 +25,13 @@ import "../interfaces/IPaymentSplitter.sol";
  * tokens that apply fees during transfers, are likely to not be supported as expected. If in doubt, we encourage you
  * to run tests before sending real value to this contract.
  */
-contract PaymentSplitter is IPaymentSplitter, Context, Initializable {
+contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
+    using SafeERC20 for IERC20;
+
     event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address to, uint256 amount);
     event ERC20PaymentReleased(
-        IERC20 indexed token,
+        address indexed token,
         address to,
         uint256 amount
     );
@@ -42,8 +44,17 @@ contract PaymentSplitter is IPaymentSplitter, Context, Initializable {
     mapping(address => uint256) private _released;
     address[] private _payees;
 
-    mapping(IERC20 => uint256) private _erc20TotalReleased;
-    mapping(IERC20 => mapping(address => uint256)) private _erc20Released;
+    mapping(address => uint256) private _erc20TotalReleased;
+    mapping(address => mapping(address => uint256)) private _erc20Released;
+
+    /**
+     * @dev Creates an instance of `PaymentSplitter`
+     *
+     * Payees must be added via {addPayee} later
+     */
+    function initialize() public initializer {
+        _transferOwnership(_msgSender());
+    }
 
     /**
      * @dev Creates an instance of `PaymentSplitter` where each account in `payees` is assigned the number of shares at
@@ -65,6 +76,18 @@ contract PaymentSplitter is IPaymentSplitter, Context, Initializable {
         for (uint256 i = 0; i < payees.length; i++) {
             _addPayee(payees[i], shares_[i]);
         }
+
+        _transferOwnership(_msgSender());
+    }
+
+    /**
+     * @dev Adds another payee to the `PaymentSplitter` with the specified number of `shares`
+     * for the `payee`
+     *
+     * `payee` must be non-zero and the payee must not already exist
+     */
+    function addPayee(address payee_, uint256 shares_) public onlyOwner {
+        _addPayee(payee_, shares_);
     }
 
     /**
@@ -102,7 +125,7 @@ contract PaymentSplitter is IPaymentSplitter, Context, Initializable {
      * @dev Getter for the total amount of `token` already released. `token` should be the address of an IERC20
      * contract.
      */
-    function totalReleased(IERC20 token) public view returns (uint256) {
+    function totalReleased(address token) public view returns (uint256) {
         return _erc20TotalReleased[token];
     }
 
@@ -124,7 +147,7 @@ contract PaymentSplitter is IPaymentSplitter, Context, Initializable {
      * @dev Getter for the amount of `token` tokens already released to a payee. `token` should be the address of an
      * IERC20 contract.
      */
-    function released(IERC20 token, address account)
+    function released(address token, address account)
         public
         view
         returns (uint256)
@@ -140,42 +163,63 @@ contract PaymentSplitter is IPaymentSplitter, Context, Initializable {
     }
 
     function pending(address account) public view returns (uint256) {
-        require(_shares[account] > 0, "PaymentSplitter: account has no shares");
+        if (_shares[account] == 0) {
+            return 0;
+        }
 
         uint256 totalReceived = address(this).balance + totalReleased();
 
         return _pendingPayment(account, totalReceived, released(account));
     }
 
-    function pending(IERC20 token, address account)
+    function pending(address token, address account)
         public
         view
         returns (uint256)
     {
-        require(_shares[account] > 0, "PaymentSplitter: account has no shares");
+        if (_shares[account] == 0) {
+            return 0;
+        }
 
-        uint256 totalReceived = token.balanceOf(address(this)) +
+        uint256 totalReceived = IERC20(token).balanceOf(address(this)) +
             totalReleased(token);
 
         return
             _pendingPayment(account, totalReceived, released(token, account));
     }
 
+    function releaseAll() public virtual {
+        for (uint8 i = 0; i < _payees.length; i++) {
+            release(_payees[i]);
+        }
+    }
+
+    function releaseAll(address token) public virtual {
+        for (uint8 i = 0; i < _payees.length; i++) {
+            release(token, _payees[i]);
+        }
+    }
+
     /**
      * @dev Triggers a transfer to `account` of the amount of Ether they are owed, according to their percentage of the
      * total shares and their previous withdrawals.
      */
-    function release(address payable account) public virtual {
-        require(_shares[account] > 0, "PaymentSplitter: account has no shares");
+    function release(address account) public virtual {
+        if (_shares[account] == 0) {
+            return;
+        }
 
         uint256 payment = pending(account);
 
-        require(payment != 0, "PaymentSplitter: account is not due payment");
+        if (payment == 0) {
+            return;
+        }
 
         _released[account] += payment;
         _totalReleased += payment;
 
-        Address.sendValue(account, payment);
+        payable(account).transfer(payment);
+
         emit PaymentReleased(account, payment);
     }
 
@@ -184,17 +228,22 @@ contract PaymentSplitter is IPaymentSplitter, Context, Initializable {
      * percentage of the total shares and their previous withdrawals. `token` must be the address of an IERC20
      * contract.
      */
-    function release(IERC20 token, address account) public virtual {
-        require(_shares[account] > 0, "PaymentSplitter: account has no shares");
+    function release(address token, address account) public virtual {
+        if (_shares[account] == 0) {
+            return;
+        }
 
         uint256 payment = pending(token, account);
 
-        require(payment != 0, "PaymentSplitter: account is not due payment");
+        if (payment == 0) {
+            return;
+        }
 
         _erc20Released[token][account] += payment;
         _erc20TotalReleased[token] += payment;
 
-        SafeERC20.safeTransfer(token, account, payment);
+        IERC20(token).safeTransfer(account, payment);
+
         emit ERC20PaymentReleased(token, account, payment);
     }
 
