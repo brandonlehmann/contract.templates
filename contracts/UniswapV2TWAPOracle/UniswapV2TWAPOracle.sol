@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import "../../@solidity-lib/contracts/libraries/FixedPoint.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@uniswap-v2-core/contracts/interfaces/IUniswapV2Pair.sol";
@@ -15,6 +16,16 @@ pairs within the same contract.
 contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
     using FixedPoint for *;
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    struct LastValue {
+        address token0;
+        address token1;
+        uint256 price0Cumulative;
+        uint256 price1Cumulative;
+        uint32 blockTimestamp;
+        FixedPoint.uq112x112 price0Average;
+        FixedPoint.uq112x112 price1Average;
+    }
 
     event AddPair(
         address indexed pair,
@@ -70,8 +81,52 @@ contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
         address pair,
         address token,
         uint256 amountIn
-    ) external view override returns (uint256 amountOut) {
+    ) public view override returns (uint256 amountOut) {
         LastValue memory _lastValue = _lastValues[pair];
+
+        if (token == _lastValue.token0) {
+            amountOut = _lastValue.price0Average.mul(amountIn).decode144();
+        } else {
+            require(token == _lastValue.token1, "INVALID_TOKEN");
+            amountOut = _lastValue.price1Average.mul(amountIn).decode144();
+        }
+    }
+
+    function consultCurrent(
+        address pair,
+        address token,
+        uint256 amountIn
+    ) public view returns (uint256 amountOut) {
+        LastValue memory _lastValue = _lastValues[pair];
+
+        (
+            uint256 price0Cumulative,
+            uint256 price1Cumulative,
+            uint32 blockTimestamp
+        ) = currentCumulativePrices(pair);
+        uint32 timeElapsed = blockTimestamp - _lastValue.blockTimestamp;
+
+        // ensure that at least one full period has passed since the last update
+        if (timeElapsed < PERIOD) {
+            return consult(pair, token, amountIn);
+        }
+
+        // overflow is desired, casting never truncates
+        // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
+        _lastValue.price0Average = FixedPoint.uq112x112(
+            uint224(
+                (price0Cumulative - _lastValue.price0Cumulative) / timeElapsed
+            )
+        );
+        _lastValue.price1Average = FixedPoint.uq112x112(
+            uint224(
+                (price1Cumulative - _lastValue.price1Cumulative) / timeElapsed
+            )
+        );
+
+        _lastValue.price0Cumulative = price0Cumulative;
+        _lastValue.price1Cumulative = price1Cumulative;
+        _lastValue.blockTimestamp = blockTimestamp;
 
         if (token == _lastValue.token0) {
             amountOut = _lastValue.price0Average.mul(amountIn).decode144();
@@ -121,12 +176,7 @@ contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
         }
     }
 
-    function lastValue(address pair)
-        public
-        view
-        override
-        returns (LastValue memory)
-    {
+    function lastValue(address pair) public view returns (LastValue memory) {
         return _lastValues[pair];
     }
 
