@@ -10,8 +10,14 @@ import Logger from '@turtlepay/logger';
         cwd: process.cwd()
     });
 
-    const contracts = readdirSync(resolve(process.cwd() + '/contracts'))
+    let contracts = readdirSync(resolve(process.cwd() + '/contracts'))
         .filter(file => !file.includes('interfaces') && !file.includes('libraries'));
+
+    if (process.argv.length === 3) {
+        const name = process.argv[2];
+
+        contracts = contracts.filter(elem => elem.includes(name));
+    }
 
     if (!existsSync(resolve(process.cwd() + '/compiled'))) {
         mkdirSync(resolve(process.cwd() + '/compiled/'));
