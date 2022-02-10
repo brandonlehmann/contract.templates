@@ -157,6 +157,14 @@ contract MonolithAutoCompounder is Ownable {
     }
 
     /**
+     * @dev Harvests any pending BEETs from the MasterChef farm and returns them to the caller
+     */
+    function harvestAndWithdrawBeets() public onlyOwner {
+        _harvest();
+        _withdraw(beets);
+    }
+
+    /**
      * @dev Pulls everything out of the contract
      */
     function withdraw() public onlyOwner {
@@ -233,7 +241,7 @@ contract MonolithAutoCompounder is Ownable {
             beetsVault.joinPool(
                 monolithPoolId,
                 address(this),
-                address(this),
+                address(this), // flattener avoidance
                 IBeethovenVault.JoinPoolRequest({
                     assets: poolAssets,
                     maxAmountsIn: amountsIn,
