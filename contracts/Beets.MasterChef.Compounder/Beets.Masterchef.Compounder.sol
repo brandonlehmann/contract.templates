@@ -128,6 +128,15 @@ contract MonolithAutoCompounder is Ownable {
         return bptmnlt.balanceOf(address(this));
     }
 
+    function lpFarming() public view returns (uint256) {
+        IBeethovenxMasterChef.UserInfo memory info = beetsChef.userInfo(
+            pid,
+            address(this)
+        );
+
+        return info.amount;
+    }
+
     function pendingBeets() public view returns (uint256) {
         return beetsChef.pendingBeets(pid, address(this));
     }
@@ -285,13 +294,10 @@ contract MonolithAutoCompounder is Ownable {
     }
 
     function _unfarmBeets() internal {
-        IBeethovenxMasterChef.UserInfo memory info = beetsChef.userInfo(
-            pid,
-            address(this)
-        );
+        uint256 amount = lpFarming();
 
-        if (info.amount != 0) {
-            beetsChef.withdrawAndHarvest(pid, info.amount, address(this)); // withdraw our lp from the farm
+        if (amount != 0) {
+            beetsChef.withdrawAndHarvest(pid, amount, address(this)); // withdraw our lp from the farm
         }
     }
 
