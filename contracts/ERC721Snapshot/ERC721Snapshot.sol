@@ -6,6 +6,8 @@ import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/IERC721Snapshot.sol";
 
 contract ERC721Snapshot is IERC721Snapshot, Initializable {
+    uint256 public constant VERSION = 2022021401;
+
     address[] public holders;
 
     /**

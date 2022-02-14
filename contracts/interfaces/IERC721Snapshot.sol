@@ -9,4 +9,6 @@ interface IERC721Snapshot {
     function holders(uint256 index) external view returns (address);
 
     function length() external view returns (uint256);
+
+    function VERSION() external view returns (uint256);
 }
