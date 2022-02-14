@@ -20,5 +20,15 @@ yarn build
 
 Resulting flattened contracts can be found in the resulting `compiled` directory.
 
-To save gas when interacting with the contracts, always deploy after compiling with optimizations at `999999`.
+To save gas when interacting with the contracts, always deploy after compiling with optimizations at `999999` if possible.
 
+### FTM Deployments
+
+#### Mainnet
+
+| Contract         | Address                                       | Version    | Clonable |
+|------------------|-----------------------------------------------|------------|----------|
+| BlockTimeTracker | `0xE3812438c87DdcaFA0796244851E3e01ec1C848c`  | 2022021401 | No       |
+| PaymentSplitter  | `0x339af1762dDFd44BfEa062576c5f2D4B91C21475`  | 2022021401 | Yes      |
+| RoyaltyManager   | `0xd9a1F4b944f215E74E0751Ae9EE86e49C4c2e623`  | 2022021401 | Yes      |
+| WhitelistManager | `0xA90a6555cc5F1d2c5EeD30258ae10978D837d5d5`  | 2022021401 | Yes      |
