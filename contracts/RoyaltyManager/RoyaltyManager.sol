@@ -5,13 +5,16 @@ import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../@openzeppelin/contracts/proxy/Clones.sol";
-import "../PaymentSplitter/PaymentSplitter.sol";
+import "../interfaces/IPaymentSplitter.sol";
 import "../interfaces/IRoyaltyManager.sol";
 
 contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
     using Clones for address;
 
     uint256 public constant VERSION = 2022021401;
+
+    address public constant PAYMENT_SPLITTER =
+        address(0x339af1762dDFd44BfEa062576c5f2D4B91C21475);
 
     event RoyaltyDeployed(
         address indexed _contract,
@@ -35,7 +38,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
         address account2,
         uint256 shares2
     ) public initializer {
-        baseRoyaltyReceiver = address(new PaymentSplitter());
+        baseRoyaltyReceiver = PAYMENT_SPLITTER.clone();
         IPaymentSplitter(baseRoyaltyReceiver).initialize();
         IPaymentSplitter(baseRoyaltyReceiver).addPayee(account1, shares1);
         IPaymentSplitter(baseRoyaltyReceiver).addPayee(account2, shares2);
@@ -63,7 +66,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
         uint256 shares2
     ) public onlyOwner whenInitialized returns (address) {
         if (knownRoyaltyReceivers[account2] == address(0)) {
-            knownRoyaltyReceivers[account2] = baseRoyaltyReceiver.clone();
+            knownRoyaltyReceivers[account2] = PAYMENT_SPLITTER.clone();
             IPaymentSplitter(knownRoyaltyReceivers[account2]).initialize();
             IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(
                 baseRoyaltyReceiver,
@@ -94,7 +97,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
      * is initialized and the ownership transferred to the caller
      */
     function cloneSplitter() public whenInitialized returns (address) {
-        address result = baseRoyaltyReceiver.clone();
+        address result = PAYMENT_SPLITTER.clone();
 
         IPaymentSplitter(result).initialize();
         IPaymentSplitter(result).transferOwnership(_msgSender());
