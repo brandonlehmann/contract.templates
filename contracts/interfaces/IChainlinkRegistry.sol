@@ -3,15 +3,17 @@ pragma solidity ^0.8.10;
 
 interface IChainlinkRegistry {
     struct ChainlinkFeed {
-        string name;
+        string symbol;
         address asset;
         address feed;
     }
 
+    function add(address feed, address asset) external;
+
     function add(
-        string memory name,
         address feed,
-        address asset
+        address asset,
+        string memory symbol
     ) external;
 
     function count() external view returns (uint256);
@@ -21,7 +23,7 @@ interface IChainlinkRegistry {
         view
         returns (ChainlinkFeed memory);
 
-    function getFeed(string memory name)
+    function getFeed(string memory symbol)
         external
         view
         returns (ChainlinkFeed memory);
@@ -30,6 +32,21 @@ interface IChainlinkRegistry {
         external
         view
         returns (ChainlinkFeed memory);
+
+    function getPrice(uint256 index)
+        external
+        view
+        returns (uint256 price, uint8 decimals);
+
+    function getPrice(address asset)
+        external
+        view
+        returns (uint256 price, uint8 decimals);
+
+    function getPrice(string memory symbol)
+        external
+        view
+        returns (uint256 price, uint8 decimals);
 
     function remove(address feed) external;
 }
