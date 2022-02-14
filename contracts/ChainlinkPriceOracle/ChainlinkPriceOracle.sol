@@ -1,20 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import "../../@openzeppelin/contracts/access/Ownable.sol";
+import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "../interfaces/IPriceOracle.sol";
 
-contract ChainlinkPriceOracle is IPriceOracle {
+contract ChainlinkPriceOracle is IPriceOracle, Initializable, Ownable {
+    uint256 public constant VERSION = 2022021401;
+
     address public BASE_PRICE_FEED;
 
-    event UpdateValues(address indexed feed);
+    uint8 public decimals = 18;
 
-    constructor(address _base_price_feed) {
+    event UpdateValues(address indexed feed);
+    event OutputDecimalsUpdated(uint8 _old, uint8 _new);
+
+    function initialize(address _base_price_feed, uint256 _unused)
+        public
+        initializer
+    {
         require(
             _base_price_feed != address(0),
             "FTM PRICE FEED cannot be the null address"
         );
         BASE_PRICE_FEED = _base_price_feed;
+        _unused; // maintain compatability with interface
+        _transferOwnership(_msgSender());
     }
 
     function getSafePrice(address _feed)
@@ -33,8 +45,18 @@ contract ChainlinkPriceOracle is IPriceOracle {
         _amountOut = _divide(
             _feedPrice(_feed),
             _feedPrice(BASE_PRICE_FEED),
-            18
+            decimals
         );
+    }
+
+    function setOutputDecimals(uint8 _decimals)
+        public
+        onlyOwner
+        whenInitialized
+    {
+        uint8 _old = _decimals;
+        decimals = _decimals;
+        emit OutputDecimalsUpdated(_old, _decimals);
     }
 
     function updateSafePrice(address _feed)

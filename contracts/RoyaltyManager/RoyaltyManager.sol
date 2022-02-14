@@ -14,7 +14,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
     uint256 public constant VERSION = 2022021401;
 
     address public constant PAYMENT_SPLITTER =
-        address(0x339af1762dDFd44BfEa062576c5f2D4B91C21475);
+        address(0x718d70C431a9cad76c1029939dE3a40E15197a0f);
 
     event RoyaltyDeployed(
         address indexed _contract,

@@ -4,6 +4,8 @@ pragma solidity ^0.8.10;
 interface IBlockTimeTracker {
     function PRECISION() external view returns (uint8);
 
+    function initialize() external;
+
     function startBlock() external view returns (uint256);
 
     function startTimestamp() external view returns (uint256);

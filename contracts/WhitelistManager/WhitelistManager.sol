@@ -36,6 +36,7 @@ contract WhitelistManager is
     function add(address account, uint256 _count)
         public
         onlyOwner
+        whenInitialized
         returns (bool)
     {
         require(!_entries.contains(account), "WHITELIST: entry already exists");
@@ -77,7 +78,7 @@ contract WhitelistManager is
     /**
      * @dev decrements the remaining count for the specified account
      */
-    function decrement(address account) public onlyOwner {
+    function decrement(address account) public onlyOwner whenInitialized {
         require(
             _counts[account] > 0,
             "WHITELIST: not enough count remaining to satisfy request"
@@ -88,7 +89,11 @@ contract WhitelistManager is
     /**
      * @dev decrements the remaining count by the {_count} for the specified account
      */
-    function decrement(address account, uint256 _count) public onlyOwner {
+    function decrement(address account, uint256 _count)
+        public
+        onlyOwner
+        whenInitialized
+    {
         require(
             _counts[account] >= _count,
             "WHITELIST: not enough count remaining to satisfy request"
@@ -123,7 +128,7 @@ contract WhitelistManager is
     /**
      * @dev pauses the whitelist
      */
-    function pause() public onlyOwner {
+    function pause() public onlyOwner whenInitialized {
         _pause();
     }
 
@@ -149,7 +154,12 @@ contract WhitelistManager is
     /**
      * @dev removes the specified account from the whitelist
      */
-    function remove(address account) public onlyOwner returns (bool) {
+    function remove(address account)
+        public
+        onlyOwner
+        whenInitialized
+        returns (bool)
+    {
         require(_entries.contains(account), "WHITELIST: entry does not exist");
         bool result = _entries.remove(account);
         if (result) {
@@ -161,7 +171,7 @@ contract WhitelistManager is
     /**
      * @dev unpauses the whitelist
      */
-    function unpause() public onlyOwner {
+    function unpause() public onlyOwner whenInitialized {
         _unpause();
     }
 

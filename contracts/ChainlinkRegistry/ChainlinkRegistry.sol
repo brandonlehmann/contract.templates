@@ -5,10 +5,13 @@ import "../../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../interfaces/IChainlinkRegistry.sol";
 
-contract ChainlinkRegistry is IChainlinkRegistry, Ownable {
+contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    uint256 public constant VERSION = 2022021401;
 
     ChainlinkFeed[] private chainlinkFeeds;
     mapping(string => uint256) private feedBySymbol;
@@ -27,15 +30,16 @@ contract ChainlinkRegistry is IChainlinkRegistry, Ownable {
         address indexed feed
     );
 
-    function add(address feed, address asset) public onlyOwner {
-        add(feed, asset, "");
+    function initialize() public initializer {
+        _transferOwnership(_msgSender());
     }
 
     function add(
         address feed,
         address asset,
-        string memory symbol
-    ) public onlyOwner {
+        string memory symbol,
+        bool lookupSymbol
+    ) public onlyOwner whenInitialized {
         require(
             !feeds.contains(feed),
             "ChainlinkRegistry: feed already exists"
@@ -46,7 +50,9 @@ contract ChainlinkRegistry is IChainlinkRegistry, Ownable {
             "AggregatorV3Interface: feed does not appear to be a chainlink feed"
         );
         if (asset != address(0)) {
-            symbol = IERC20Metadata(asset).symbol();
+            if (lookupSymbol) {
+                symbol = IERC20Metadata(asset).symbol();
+            }
 
             require(
                 feedBySymbol[symbol] == 0,
@@ -147,7 +153,7 @@ contract ChainlinkRegistry is IChainlinkRegistry, Ownable {
         decimals = _getDecimals(info.feed);
     }
 
-    function remove(address feed) public onlyOwner {
+    function remove(address feed) public onlyOwner whenInitialized {
         require(feeds.contains(feed), "ChainlinkRegistry: feed does not exist");
 
         uint256 index = feedByFeed[feed];
@@ -163,12 +169,16 @@ contract ChainlinkRegistry is IChainlinkRegistry, Ownable {
         emit RemoveFeed(info.symbol, info.asset, info.feed);
     }
 
-    function _getPrice(address _feed) public view returns (uint256 _value) {
+    function _getPrice(address _feed) internal view returns (uint256 _value) {
         (, int256 value, , , ) = AggregatorV3Interface(_feed).latestRoundData();
         return uint256(value);
     }
 
-    function _getDecimals(address _feed) public view returns (uint8 _decimals) {
+    function _getDecimals(address _feed)
+        internal
+        view
+        returns (uint8 _decimals)
+    {
         return AggregatorV3Interface(_feed).decimals();
     }
 }

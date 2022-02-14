@@ -6,6 +6,7 @@ Most are wrapped around known contract libraries (with updates) such as:
 * UniSwap-v2-core
 * UniSwap-v3-core
 * Solidity-lib
+* Chainlink
 
 Project will flatten each contract so that it's easily deployable via Remix et. al.
 
@@ -26,11 +27,13 @@ To save gas when interacting with the contracts, always deploy after compiling w
 
 #### Mainnet
 
-| Contract          | Address                                        | Version    | Clonable |
-|-------------------|------------------------------------------------|------------|----------|
-| BlockTimeTracker  | `0xE3812438c87DdcaFA0796244851E3e01ec1C848c`   | 2022021401 | No       |
-| PaymentSplitter   | `0x339af1762dDFd44BfEa062576c5f2D4B91C21475`   | 2022021401 | Yes      |
-| RoyaltyManager    | `0xd9a1F4b944f215E74E0751Ae9EE86e49C4c2e623`   | 2022021401 | Yes      |
-| WhitelistManager  | `0xA90a6555cc5F1d2c5EeD30258ae10978D837d5d5`   | 2022021401 | Yes      |
-| ChainlinkRegistry | `0xC821f5a79c182D3BFc7dD40B5825349ff2915cd8`   |            | No       |
-| ERC721Snapshot    | `0xeAe39b105192ddF1331C6F534875C4ca7Ff7C113`   | 2022021401 | Yes      |
+| Contract             | Address                                       | Version    | Clonable |
+|----------------------|-----------------------------------------------|------------|----------|
+| BlockTimeTracker     | `0xFeb16234BBeFCAfaFB4eA2E60541104195E4576c`  | 2022021401 | Yes      |
+| PaymentSplitter      | `0x718d70C431a9cad76c1029939dE3a40E15197a0f`  | 2022021401 | Yes      |
+| RoyaltyManager       | `0x1092C10c4735F813bB0fcFbb11fB34Ed45C42Ff1`  | 2022021401 | Yes      |
+| WhitelistManager     | `0x3ce27770098A2413c875980AEA409966D6028660`  | 2022021401 | Yes      |
+| ChainlinkRegistry    | `0x49a2BFE2F9aC9Edf4077779E268C9b58F52df1Aa`  | 2022021401 | Yes      |
+| ERC721Snapshot       | `0xeAe39b105192ddF1331C6F534875C4ca7Ff7C113`  | 2022021401 | Yes      |
+| UniswapV2TWAPOracle  | `0x0E0Ff420EB5D6860DD3eBf3dfE745C335bCA7af7`  | 2022021401 | Yes      |
+| ChainlinkPriceOracle | `0x693f31346ecDf2EB1FBf63D0b450Ced6a7f9Cf34`  | 2022021401 | Yes      |

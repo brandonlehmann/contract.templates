@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../@solidity-lib/contracts/libraries/FixedPoint.sol";
-import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@uniswap-v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-import "../interfaces/IUniswapV2TWAPOracle.sol";
+import "../../@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "../interfaces/IPriceOracle.sol";
 
 /**
 See https://github.com/Uniswap/v2-periphery/blob/master/contracts/examples/ExampleOracleSimple.sol
@@ -13,9 +13,10 @@ for the basis for the below contract. ExampleOracleSimple contract has been exte
 pairs within the same contract.
 */
 
-contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
+contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
     using FixedPoint for *;
-    using EnumerableSet for EnumerableSet.AddressSet;
+
+    uint256 public constant VERSION = 2022021401;
 
     struct LastValue {
         address token0;
@@ -27,16 +28,6 @@ contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
         FixedPoint.uq112x112 price1Average;
     }
 
-    event AddPair(
-        address indexed pair,
-        address indexed token0,
-        address indexed token1
-    );
-    event RemovePair(
-        address indexed pair,
-        address indexed token0,
-        address indexed token1
-    );
     event UpdatedValues(
         address indexed pair,
         FixedPoint.uq112x112 price0Average,
@@ -46,103 +37,130 @@ contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
         uint32 blockTimestamp
     );
 
-    uint256 public constant PERIOD = 5 minutes;
+    mapping(IUniswapV2Pair => LastValue) public LAST_VALUES;
 
-    mapping(address => LastValue) private _lastValues;
-    EnumerableSet.AddressSet private pairs;
+    address public TOKEN;
 
-    function addPair(address pair) public onlyOwner {
-        require(!pairs.contains(pair), "PAIR_ALREADY_EXISTS");
+    uint256 public MINIMUM_UPDATE_INTERVAL = 5 minutes;
 
-        IUniswapV2Pair _pair = IUniswapV2Pair(pair);
+    /**
+     * @dev sets up the Price Oracle
+     *
+     * @param _inToken the "target" token that is paired with FTM/wFTM
+     * @param _minimumUpdateInterval how often to permit updates to the TWAP (seconds)
+     *                               If set to 0, will use the default of 5 minutes
+     */
+    function initialize(address _inToken, uint256 _minimumUpdateInterval)
+        public
+        initializer
+    {
+        require(_inToken != address(0), "Base Token cannot be null address");
+        TOKEN = _inToken;
 
-        (uint256 reserve0, uint256 reserve1, uint32 blockTimestampLast) = _pair
-            .getReserves();
-
-        require(reserve0 != 0 && reserve1 != 0, "NO_RESERVES");
-
-        _lastValues[pair] = LastValue({
-            token0: _pair.token0(),
-            token1: _pair.token1(),
-            price0Cumulative: _pair.price0CumulativeLast(),
-            price1Cumulative: _pair.price1CumulativeLast(),
-            blockTimestamp: blockTimestampLast,
-            price0Average: type(uint112).min.encode(),
-            price1Average: type(uint112).min.encode()
-        });
-
-        pairs.add(pair);
-
-        emit AddPair(pair, _pair.token0(), _pair.token1());
+        if (_minimumUpdateInterval != 0) {
+            MINIMUM_UPDATE_INTERVAL = _minimumUpdateInterval;
+        }
     }
 
-    // returns the the amount of other tokens for the tokens specified
-    function consult(
-        address pair,
-        address token,
-        uint256 amountIn
-    ) public view override returns (uint256 amountOut) {
-        LastValue memory _lastValue = _lastValues[pair];
+    /****** OPERATIONAL METHODS ******/
 
-        if (token == _lastValue.token0) {
-            amountOut = _lastValue.price0Average.mul(amountIn).decode144();
+    /**
+     * @dev returns the TWAP for the provided pair as of the last update
+     */
+    function getSafePrice(address _pair)
+        public
+        view
+        returns (uint256 _amountOut)
+    {
+        LastValue memory _lastValue = LAST_VALUES[IUniswapV2Pair(_pair)];
+
+        uint256 amountIn = 10**IERC20Metadata(TOKEN).decimals();
+
+        // calculate the value based upon the average cumulative prices
+        // over the time period (TWAP)
+        if (TOKEN == _lastValue.token0) {
+            _amountOut = _lastValue.price0Average.mul(amountIn).decode144();
         } else {
-            require(token == _lastValue.token1, "INVALID_TOKEN");
-            amountOut = _lastValue.price1Average.mul(amountIn).decode144();
+            require(TOKEN == _lastValue.token1, "INVALID PAIR");
+            _amountOut = _lastValue.price1Average.mul(amountIn).decode144();
         }
     }
 
-    function consultCurrent(
-        address pair,
-        address token,
-        uint256 amountIn
-    ) public view returns (uint256 amountOut) {
-        LastValue memory _lastValue = _lastValues[pair];
+    /**
+     * @dev returns the current "unsafe" price that can be easily manipulated
+     */
+    function getCurrentPrice(address _pair)
+        public
+        view
+        returns (uint256 _amountOut)
+    {
+        IUniswapV2Pair pair = IUniswapV2Pair(_pair);
 
-        (
-            uint256 price0Cumulative,
-            uint256 price1Cumulative,
-            uint32 blockTimestamp
-        ) = currentCumulativePrices(pair);
-        uint32 timeElapsed = blockTimestamp - _lastValue.blockTimestamp;
+        (uint256 reserves0, uint256 reserves1, ) = pair.getReserves();
 
-        // ensure that at least one full period has passed since the last update
-        if (timeElapsed < PERIOD) {
-            return consult(pair, token, amountIn);
-        }
-
-        // overflow is desired, casting never truncates
-        // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
-        _lastValue.price0Average = FixedPoint.uq112x112(
-            uint224(
-                (price0Cumulative - _lastValue.price0Cumulative) / timeElapsed
-            )
-        );
-        _lastValue.price1Average = FixedPoint.uq112x112(
-            uint224(
-                (price1Cumulative - _lastValue.price1Cumulative) / timeElapsed
-            )
-        );
-
-        _lastValue.price0Cumulative = price0Cumulative;
-        _lastValue.price1Cumulative = price1Cumulative;
-        _lastValue.blockTimestamp = blockTimestamp;
-
-        if (token == _lastValue.token0) {
-            amountOut = _lastValue.price0Average.mul(amountIn).decode144();
+        // simple spot pricing calculation
+        if (TOKEN == pair.token0()) {
+            _amountOut = _divide(
+                reserves1,
+                reserves0,
+                IERC20Metadata(pair.token1()).decimals()
+            );
         } else {
-            require(token == _lastValue.token1, "INVALID_TOKEN");
-            amountOut = _lastValue.price1Average.mul(amountIn).decode144();
+            require(TOKEN == pair.token1(), "INVALID PAIR");
+            _amountOut = _divide(
+                reserves0,
+                reserves1,
+                IERC20Metadata(pair.token0()).decimals()
+            );
         }
     }
+
+    /**
+     * @dev updates the TWAP (if enough time has lapsed) and returns the current safe price
+     */
+    function updateSafePrice(address pair)
+        public
+        whenInitialized
+        returns (uint256 _amountOut)
+    {
+        // loads the pair if it is not currently tracked
+        _loadPair(IUniswapV2Pair(pair));
+
+        (LastValue memory _lastValue, uint32 timeElapsed) = _getCurrentValues(
+            IUniswapV2Pair(pair)
+        );
+
+        // ensure that at least one full MINIMUM_UPDATE_INTERVAL has passed since the last update
+        if (timeElapsed < MINIMUM_UPDATE_INTERVAL) {
+            return getSafePrice(pair);
+        }
+
+        // update the stored record
+        LAST_VALUES[IUniswapV2Pair(pair)] = _lastValue;
+
+        emit UpdatedValues(
+            pair,
+            _lastValue.price0Average,
+            _lastValue.price1Average,
+            _lastValue.price0Cumulative,
+            _lastValue.price1Cumulative,
+            _lastValue.blockTimestamp
+        );
+
+        return getSafePrice(pair);
+    }
+
+    /****** INTERNAL METHODS ******/
 
     // helper function that returns the current block timestamp within the range of uint32, i.e. [0, 2**32 - 1]
-    function currentBlockTimestamp() internal view returns (uint32) {
+    function _currentBlockTimestamp() internal view returns (uint32) {
         return uint32(block.timestamp % 2**32);
     }
 
-    // produces the cumulative price using counterfactuals to save gas and avoid a call to sync.
-    function currentCumulativePrices(address pair)
+    /**
+     * @dev fetches the current cumulative prices for token0 and token1 from the pair
+     */
+    function _currentCumulativePrices(IUniswapV2Pair pair)
         internal
         view
         returns (
@@ -151,7 +169,7 @@ contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
             uint32 blockTimestamp
         )
     {
-        blockTimestamp = currentBlockTimestamp();
+        blockTimestamp = _currentBlockTimestamp();
         price0Cumulative = IUniswapV2Pair(pair).price0CumulativeLast();
         price1Cumulative = IUniswapV2Pair(pair).price1CumulativeLast();
 
@@ -161,6 +179,7 @@ contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
             uint112 reserve1,
             uint32 blockTimestampLast
         ) = IUniswapV2Pair(pair).getReserves();
+
         if (blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
             uint32 timeElapsed = blockTimestamp - blockTimestampLast;
@@ -176,65 +195,80 @@ contract UniswapV2TWAPOracle is IUniswapV2TWAPOracle, Ownable {
         }
     }
 
-    function lastValue(address pair) public view returns (LastValue memory) {
-        return _lastValues[pair];
+    /**
+     * @dev internal method that does quick division using the set precision
+     */
+    function _divide(
+        uint256 a,
+        uint256 b,
+        uint8 precision
+    ) internal pure returns (uint256) {
+        return (a * (10**precision)) / b;
     }
 
-    function removePair(address pair) public onlyOwner {
-        require(pairs.contains(pair), "PAIR_DOES_NOT_EXIST");
-        LastValue memory old = _lastValues[pair];
-        pairs.remove(pair);
-        delete _lastValues[pair];
-        emit RemovePair(pair, old.token0, old.token1);
-    }
-
-    function update(address pair) public override {
-        LastValue memory _lastValue = _lastValues[pair];
+    /**
+     * @dev retrieves an updated LastValue structure for current pair values
+     * that can be used elsewhere in further calculations
+     */
+    function _getCurrentValues(IUniswapV2Pair pair)
+        internal
+        view
+        returns (LastValue memory, uint32 timeElapsed)
+    {
+        LastValue memory _lastValue = LAST_VALUES[pair];
 
         (
             uint256 price0Cumulative,
             uint256 price1Cumulative,
             uint32 blockTimestamp
-        ) = currentCumulativePrices(pair);
-        uint32 timeElapsed = blockTimestamp - _lastValue.blockTimestamp;
+        ) = _currentCumulativePrices(pair);
 
-        // ensure that at least one full period has passed since the last update
-        if (timeElapsed < PERIOD) {
-            return;
+        timeElapsed = blockTimestamp - _lastValue.blockTimestamp;
+
+        // avoid divide by 0 error (ie, no time elapsed)
+        if (timeElapsed == 0) {
+            timeElapsed = 1;
         }
 
         // overflow is desired, casting never truncates
-        // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
+        // cumulative price is in (uq112x112 price * seconds) units so we simply wrap
+        // it after division by time elapsed
         _lastValue.price0Average = FixedPoint.uq112x112(
             uint224(
                 (price0Cumulative - _lastValue.price0Cumulative) / timeElapsed
             )
         );
+
         _lastValue.price1Average = FixedPoint.uq112x112(
             uint224(
                 (price1Cumulative - _lastValue.price1Cumulative) / timeElapsed
             )
         );
 
+        // update values
         _lastValue.price0Cumulative = price0Cumulative;
         _lastValue.price1Cumulative = price1Cumulative;
         _lastValue.blockTimestamp = blockTimestamp;
 
-        _lastValues[pair] = _lastValue;
-
-        emit UpdatedValues(
-            pair,
-            _lastValue.price0Average,
-            _lastValue.price1Average,
-            price0Cumulative,
-            price1Cumulative,
-            blockTimestamp
-        );
+        return (_lastValue, timeElapsed);
     }
 
-    function updateAll() public override {
-        for (uint8 i = 0; i < pairs.length(); ++i) {
-            update(pairs.at(i));
+    /**
+     * @dev checks to see if the pair is known to us, if not, populate the first TWAP entry
+     */
+    function _loadPair(IUniswapV2Pair pair) internal {
+        if (LAST_VALUES[pair].blockTimestamp == 0) {
+            (, , uint32 blockTimestampLast) = pair.getReserves();
+
+            LAST_VALUES[pair] = LastValue({
+                token0: pair.token0(),
+                token1: pair.token1(),
+                price0Cumulative: pair.price0CumulativeLast(),
+                price1Cumulative: pair.price1CumulativeLast(),
+                blockTimestamp: blockTimestampLast,
+                price0Average: type(uint112).min.encode(),
+                price1Average: type(uint112).min.encode()
+            });
         }
     }
 }

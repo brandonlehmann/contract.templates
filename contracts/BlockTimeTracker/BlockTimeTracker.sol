@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
+import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IBlockTimeTracker.sol";
 
-contract BlockTimeTracker is IBlockTimeTracker, Ownable {
+contract BlockTimeTracker is IBlockTimeTracker, Initializable, Ownable {
     uint256 public constant VERSION = 2022021401;
     uint8 public constant PRECISION = 6;
     uint256 public startBlock;
     uint256 public startTimestamp;
 
-    constructor() {
+    function initialize() public initializer {
         startBlock = currentBlock();
         startTimestamp = currentTimestamp();
+
+        _transferOwnership(_msgSender());
     }
 
     /**
@@ -51,7 +54,7 @@ contract BlockTimeTracker is IBlockTimeTracker, Ownable {
     /**
      * @dev resets the start block and start timestamp
      */
-    function reset() public onlyOwner {
+    function reset() public onlyOwner whenInitialized {
         startBlock = currentBlock();
         startTimestamp = currentTimestamp();
     }

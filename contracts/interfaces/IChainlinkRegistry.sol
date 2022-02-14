@@ -8,15 +8,16 @@ interface IChainlinkRegistry {
         address feed;
     }
 
-    function add(address feed, address asset) external;
-
     function add(
         address feed,
         address asset,
-        string memory symbol
+        string memory symbol,
+        bool lookupSymbol
     ) external;
 
     function count() external view returns (uint256);
+
+    function initialize() external;
 
     function getFeed(uint256 index)
         external
@@ -49,4 +50,6 @@ interface IChainlinkRegistry {
         returns (uint256 price, uint8 decimals);
 
     function remove(address feed) external;
+
+    function VERSION() external view returns (uint256);
 }

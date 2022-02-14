@@ -88,7 +88,11 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
      *
      * `payee` must be non-zero and the payee must not already exist
      */
-    function addPayee(address payee_, uint256 shares_) public onlyOwner {
+    function addPayee(address payee_, uint256 shares_)
+        public
+        onlyOwner
+        whenInitialized
+    {
         _addPayee(payee_, shares_);
     }
 
