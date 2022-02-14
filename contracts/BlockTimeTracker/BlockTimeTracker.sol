@@ -5,6 +5,7 @@ import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IBlockTimeTracker.sol";
 
 contract BlockTimeTracker is IBlockTimeTracker, Ownable {
+    uint256 public constant VERSION = 2022021401;
     uint8 public constant PRECISION = 6;
     uint256 public startBlock;
     uint256 public startTimestamp;

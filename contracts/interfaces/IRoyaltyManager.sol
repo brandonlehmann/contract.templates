@@ -33,4 +33,6 @@ interface IRoyaltyManager {
     function releaseAll(uint256 tokenId) external;
 
     function releaseAll(uint256 tokenId, address token) external;
+
+    function VERSION() external view returns (uint256);
 }

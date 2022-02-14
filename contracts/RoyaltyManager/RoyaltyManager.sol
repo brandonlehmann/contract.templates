@@ -11,6 +11,8 @@ import "../interfaces/IRoyaltyManager.sol";
 contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
     using Clones for address;
 
+    uint256 public constant VERSION = 2022021401;
+
     event RoyaltyDeployed(
         address indexed _contract,
         uint256 indexed _tokenId,

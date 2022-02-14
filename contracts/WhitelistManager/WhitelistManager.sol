@@ -15,6 +15,8 @@ contract WhitelistManager is
 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    uint256 public constant VERSION = 2022021401;
+
     event AccountAdded(address indexed account, uint256 indexed count);
     event AccountRemoved(address indexed account);
 

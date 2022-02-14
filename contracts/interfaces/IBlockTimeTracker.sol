@@ -11,4 +11,6 @@ interface IBlockTimeTracker {
     function average() external view returns (uint256);
 
     function reset() external;
+
+    function VERSION() external view returns (uint256);
 }

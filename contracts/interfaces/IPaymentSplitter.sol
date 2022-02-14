@@ -44,4 +44,6 @@ interface IPaymentSplitter {
     function release(address token, address account) external;
 
     function transferOwnership(address newOwner) external;
+
+    function VERSION() external view returns (uint256);
 }

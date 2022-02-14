@@ -28,6 +28,8 @@ import "../interfaces/IPaymentSplitter.sol";
 contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
     using SafeERC20 for IERC20;
 
+    uint256 public constant VERSION = 2022021401;
+
     event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address to, uint256 amount);
     event ERC20PaymentReleased(

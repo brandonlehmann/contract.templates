@@ -40,4 +40,6 @@ interface IWhitelistManager {
     function unpause() external;
 
     function values() external returns (address[] memory);
+
+    function VERSION() external view returns (uint256);
 }

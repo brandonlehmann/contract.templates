@@ -25,6 +25,8 @@ abstract contract ERC721Template is
     using Address for address;
     using Clones for address;
 
+    uint256 public constant VERSION = 2022021401;
+
     // fee settings
     uint256 public MINTING_FEE;
     uint256 public MAX_SUPPLY;
@@ -75,12 +77,24 @@ abstract contract ERC721Template is
             "RoyaltyManager cannot be null address"
         );
         require(
+            IRoyaltyManager(_royaltyManager).VERSION() == VERSION,
+            "RoyaltyManager is wrong version"
+        );
+        require(
             address(_blockTimeTracker) != address(0),
             "BlockTimeTracker cannot be null address"
         );
         require(
+            _blockTimeTracker.VERSION() == VERSION,
+            "BlockTimeTracker is wrong version"
+        );
+        require(
             _whitelistManager != address(0),
             "WhitelistManager cannot be null address"
+        );
+        require(
+            IWhitelistManager(_whitelistManager).VERSION() == VERSION,
+            "WhitelistManager is wrong version"
         );
 
         MAX_SUPPLY = _maxSupply;
