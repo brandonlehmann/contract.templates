@@ -281,4 +281,12 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
         _totalShares = _totalShares + shares_;
         emit PayeeAdded(account, shares_);
     }
+
+    function transferOwnership(address newOwner)
+        public
+        override(IPaymentSplitter, Ownable)
+        onlyOwner
+    {
+        super._transferOwnership(newOwner);
+    }
 }
