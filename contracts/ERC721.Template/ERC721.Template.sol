@@ -202,14 +202,14 @@ abstract contract ERC721Template is
         whenInitialized
         returns (uint256[] memory)
     {
-        require(count != 0, "ERC20: must mint at least one");
+        require(count != 0, "ERC721: must mint at least one");
         require(
             count <= MAX_TOKENS_PER_MINT,
-            "ERC20: max tokens per mint exceeded"
+            "ERC721: max tokens per mint exceeded"
         );
         require(
             msg.value == MINTING_FEE * count,
-            "ERC20: caller did not supply correct amount"
+            "ERC721: caller did not supply correct amount"
         );
 
         // if the whitelist is active and the contract is paused
@@ -242,10 +242,10 @@ abstract contract ERC721Template is
         whenInitialized
         returns (uint256[] memory)
     {
-        require(count != 0, "ERC20: must mint at least one");
+        require(count != 0, "ERC721: must mint at least one");
         require(
             count <= MAX_TOKENS_PER_MINT,
-            "ERC20: max tokens per mint exceeded"
+            "ERC721: max tokens per mint exceeded"
         );
 
         uint256[] memory tokenIds = new uint256[](count);
@@ -269,7 +269,7 @@ abstract contract ERC721Template is
      */
     function _mintNFT(address _to) internal virtual returns (uint256) {
         uint256 supply = totalSupply();
-        require(supply + 1 <= MAX_SUPPLY, "ERC20: Mint Complete");
+        require(supply + 1 <= MAX_SUPPLY, "ERC721: Mint Complete");
 
         uint256 tokenId = supply + 1;
 
