@@ -29,7 +29,7 @@ To save gas when interacting with the contracts, always deploy after compiling w
 
 | Contract             | Address                                       | Version    | Clonable |
 |----------------------|-----------------------------------------------|------------|----------|
-| BlockTimeTracker     | `0xFeb16234BBeFCAfaFB4eA2E60541104195E4576c`  | 2022021401 | Yes      |
+| BlockTimeTracker     | `0x06e216fB50E49C9e284dD924cb4278D7B2A714ce`  | 2022021601 | Yes      |
 | PaymentSplitter      | `0x718d70C431a9cad76c1029939dE3a40E15197a0f`  | 2022021401 | Yes      |
 | RoyaltyManager       | `0x1092C10c4735F813bB0fcFbb11fB34Ed45C42Ff1`  | 2022021401 | Yes      |
 | WhitelistManager     | `0x3ce27770098A2413c875980AEA409966D6028660`  | 2022021401 | Yes      |

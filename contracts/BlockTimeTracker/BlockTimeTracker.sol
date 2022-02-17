@@ -6,14 +6,13 @@ import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IBlockTimeTracker.sol";
 
 contract BlockTimeTracker is IBlockTimeTracker, Initializable, Ownable {
-    uint256 public constant VERSION = 2022021401;
-    uint8 public constant PRECISION = 6;
-    uint256 public startBlock;
-    uint256 public startTimestamp;
+    uint256 public constant VERSION = 2022021601;
+    uint256 public startBlock = 0;
+    uint256 public startTimestamp = 0;
 
     function initialize() public initializer {
-        startBlock = currentBlock();
-        startTimestamp = currentTimestamp();
+        startBlock = block.number;
+        startTimestamp = block.timestamp;
 
         _transferOwnership(_msgSender());
     }
@@ -29,25 +28,17 @@ contract BlockTimeTracker is IBlockTimeTracker, Initializable, Ownable {
         return (a * (10**precision)) / b;
     }
 
-    function currentTimestamp() internal view returns (uint256) {
-        return block.timestamp;
-    }
-
-    function currentBlock() internal view returns (uint256) {
-        return block.number;
-    }
-
     /**
      * @dev returns the time weighted average blocks per second
      * PRECISION defines the number of digits required to represent
      * the fixed floating point representation of the value
      */
-    function average() public view returns (uint256) {
+    function average(uint8 precision) public view returns (uint256) {
         return
             divide(
-                (currentBlock() - startBlock),
-                (currentTimestamp() - startTimestamp),
-                PRECISION
+                (block.number - startBlock),
+                (block.timestamp - startTimestamp),
+                precision
             );
     }
 
@@ -55,7 +46,7 @@ contract BlockTimeTracker is IBlockTimeTracker, Initializable, Ownable {
      * @dev resets the start block and start timestamp
      */
     function reset() public onlyOwner whenInitialized {
-        startBlock = currentBlock();
-        startTimestamp = currentTimestamp();
+        startBlock = block.number;
+        startTimestamp = block.timestamp;
     }
 }

@@ -56,8 +56,8 @@ contract DAOInformationHelper is IDAOInformationHelper {
         stakingIndex = IStakingContract(stakingContract).index();
         stakedDecimals = IStakedToken(stakedToken).decimals();
         stakedCirculatingSupply = IStakedToken(stakedToken).circulatingSupply();
-        blockAverage = IBlockTimeTracker(timeTracker).average();
-        blockPrecision = IBlockTimeTracker(timeTracker).PRECISION();
+        blockAverage = IBlockTimeTracker(timeTracker).average(6);
+        blockPrecision = 6;
         stakingBalance = IStakedToken(stakedToken).balanceOf(stakingWallet);
     }
 }

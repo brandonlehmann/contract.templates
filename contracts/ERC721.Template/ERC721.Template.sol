@@ -122,7 +122,7 @@ abstract contract ERC721Template is
                     block.timestamp,
                     block.number,
                     address(this),
-                    _blockTimeTracker.average()
+                    _blockTimeTracker.average(6)
                 )
             )
         );
