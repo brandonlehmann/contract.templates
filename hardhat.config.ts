@@ -21,7 +21,14 @@ export const config: HardhatUserConfig = {
         sources: resolve(process.cwd() + '/contracts'),
         root: resolve(process.cwd())
     },
-    defaultNetwork: 'hardhat'
+    defaultNetwork: 'hardhat',
+    networks: {
+        hardhat: {
+            accounts: {
+                accountsBalance: '1000000000000000000000000000000'
+            }
+        }
+    }
 };
 
 export default config;
