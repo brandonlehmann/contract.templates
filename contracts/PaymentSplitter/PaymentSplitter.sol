@@ -28,7 +28,7 @@ import "../interfaces/IPaymentSplitter.sol";
 contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
     using SafeERC20 for IERC20;
 
-    uint256 public constant VERSION = 2022021401;
+    uint256 public constant VERSION = 2022032401;
 
     event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address to, uint256 amount);
@@ -224,9 +224,11 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
         _released[account] += payment;
         _totalReleased += payment;
 
-        payable(account).transfer(payment);
+        (bool sent, ) = account.call{value: payment}("");
 
-        emit PaymentReleased(account, payment);
+        if (sent) {
+            emit PaymentReleased(account, payment);
+        }
     }
 
     /**
