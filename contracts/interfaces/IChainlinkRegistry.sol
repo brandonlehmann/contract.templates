@@ -19,35 +19,17 @@ interface IChainlinkRegistry {
 
     function initialize() external;
 
-    function getFeed(uint256 index)
-        external
-        view
-        returns (ChainlinkFeed memory);
+    function getFeed(uint256 index) external view returns (ChainlinkFeed memory);
 
-    function getFeed(string memory symbol)
-        external
-        view
-        returns (ChainlinkFeed memory);
+    function getFeed(string memory symbol) external view returns (ChainlinkFeed memory);
 
-    function getFeed(address asset)
-        external
-        view
-        returns (ChainlinkFeed memory);
+    function getFeed(address asset) external view returns (ChainlinkFeed memory);
 
-    function getPrice(uint256 index)
-        external
-        view
-        returns (uint256 price, uint8 decimals);
+    function getPrice(uint256 index) external view returns (uint256 price, uint8 decimals);
 
-    function getPrice(address asset)
-        external
-        view
-        returns (uint256 price, uint8 decimals);
+    function getPrice(address asset) external view returns (uint256 price, uint8 decimals);
 
-    function getPrice(string memory symbol)
-        external
-        view
-        returns (uint256 price, uint8 decimals);
+    function getPrice(string memory symbol) external view returns (uint256 price, uint8 decimals);
 
     function remove(address feed) external;
 

@@ -26,10 +26,7 @@ contract BondInformationHelper is IBondInformationHelper {
                 IERC20Metadata token0 = IERC20Metadata(pair.token0());
                 IERC20Metadata token1 = IERC20Metadata(pair.token1());
 
-                return
-                    string(
-                        abi.encodePacked(token0.name(), " / ", token1.name())
-                    );
+                return string(abi.encodePacked(token0.name(), " / ", token1.name()));
             }
         } catch {
             return IERC20Metadata(principle).name();
@@ -50,10 +47,7 @@ contract BondInformationHelper is IBondInformationHelper {
                 IERC20Metadata token0 = IERC20Metadata(pair.token0());
                 IERC20Metadata token1 = IERC20Metadata(pair.token1());
 
-                return
-                    string(
-                        abi.encodePacked(token0.symbol(), "-", token1.symbol())
-                    );
+                return string(abi.encodePacked(token0.symbol(), "-", token1.symbol()));
             }
         } catch {
             return IERC20Metadata(principle).symbol();

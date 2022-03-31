@@ -13,8 +13,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
 
     uint256 public constant VERSION = 2022021401;
 
-    address public constant PAYMENT_SPLITTER =
-        address(0x718d70C431a9cad76c1029939dE3a40E15197a0f);
+    address public constant PAYMENT_SPLITTER = address(0x718d70C431a9cad76c1029939dE3a40E15197a0f);
 
     event RoyaltyDeployed(
         address indexed _contract,
@@ -43,14 +42,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
         IPaymentSplitter(baseRoyaltyReceiver).addPayee(account1, shares1);
         IPaymentSplitter(baseRoyaltyReceiver).addPayee(account2, shares2);
 
-        emit RoyaltyDeployed(
-            baseRoyaltyReceiver,
-            0,
-            account1,
-            account2,
-            shares1,
-            shares2
-        );
+        emit RoyaltyDeployed(baseRoyaltyReceiver, 0, account1, account2, shares1, shares2);
 
         _transferOwnership(_msgSender());
     }
@@ -68,14 +60,8 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
         if (knownRoyaltyReceivers[account2] == address(0)) {
             knownRoyaltyReceivers[account2] = PAYMENT_SPLITTER.clone();
             IPaymentSplitter(knownRoyaltyReceivers[account2]).initialize();
-            IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(
-                baseRoyaltyReceiver,
-                shares1
-            );
-            IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(
-                account2,
-                shares2
-            );
+            IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(baseRoyaltyReceiver, shares1);
+            IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(account2, shares2);
 
             emit RoyaltyDeployed(
                 knownRoyaltyReceivers[account2],
@@ -111,9 +97,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
      */
     function releaseAll(uint256 tokenId) public whenInitialized {
         if (tokenRoyaltyReceiver[tokenId] != address(0)) {
-            IPaymentSplitter(
-                knownRoyaltyReceivers[tokenRoyaltyReceiver[tokenId]]
-            ).releaseAll();
+            IPaymentSplitter(knownRoyaltyReceivers[tokenRoyaltyReceiver[tokenId]]).releaseAll();
         }
 
         IPaymentSplitter(baseRoyaltyReceiver).releaseAll();
@@ -125,9 +109,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
      */
     function releaseAll(uint256 tokenId, address token) public whenInitialized {
         if (tokenRoyaltyReceiver[tokenId] != address(0)) {
-            IPaymentSplitter(
-                knownRoyaltyReceivers[tokenRoyaltyReceiver[tokenId]]
-            ).releaseAll(token);
+            IPaymentSplitter(knownRoyaltyReceivers[tokenRoyaltyReceiver[tokenId]]).releaseAll(token);
         }
 
         IPaymentSplitter(baseRoyaltyReceiver).releaseAll(token);

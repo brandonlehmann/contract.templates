@@ -19,16 +19,8 @@ contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
     mapping(address => uint256) private feedByFeed;
     EnumerableSet.AddressSet private feeds;
 
-    event AddFeed(
-        string indexed symbol,
-        address indexed asset,
-        address indexed feed
-    );
-    event RemoveFeed(
-        string indexed symbol,
-        address indexed assset,
-        address indexed feed
-    );
+    event AddFeed(string indexed symbol, address indexed asset, address indexed feed);
+    event RemoveFeed(string indexed symbol, address indexed assset, address indexed feed);
 
     function initialize() public initializer {
         _transferOwnership(_msgSender());
@@ -40,13 +32,9 @@ contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
         string memory symbol,
         bool lookupSymbol
     ) public onlyOwner whenInitialized {
+        require(!feeds.contains(feed), "ChainlinkRegistry: feed already exists");
         require(
-            !feeds.contains(feed),
-            "ChainlinkRegistry: feed already exists"
-        );
-        require(
-            AggregatorV3Interface(feed).version() != 0 &&
-                AggregatorV3Interface(feed).decimals() != 0,
+            AggregatorV3Interface(feed).version() != 0 && AggregatorV3Interface(feed).decimals() != 0,
             "AggregatorV3Interface: feed does not appear to be a chainlink feed"
         );
         if (asset != address(0)) {
@@ -54,26 +42,15 @@ contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
                 symbol = IERC20Metadata(asset).symbol();
             }
 
-            require(
-                feedBySymbol[symbol] == 0,
-                "ChainlinkRegistry: feed already exists for symbol"
-            );
+            require(feedBySymbol[symbol] == 0, "ChainlinkRegistry: feed already exists for symbol");
 
-            require(
-                feedByAsset[asset] == 0,
-                "ChainlinkRegistry: feed already exists for asset"
-            );
-            require(
-                IERC20Metadata(asset).decimals() != 0,
-                "ERC721Metadata: token does not appear to be an ERC20"
-            );
+            require(feedByAsset[asset] == 0, "ChainlinkRegistry: feed already exists for asset");
+            require(IERC20Metadata(asset).decimals() != 0, "ERC721Metadata: token does not appear to be an ERC20");
         }
 
         uint256 index = chainlinkFeeds.length;
 
-        chainlinkFeeds.push(
-            ChainlinkFeed({symbol: symbol, asset: asset, feed: feed})
-        );
+        chainlinkFeeds.push(ChainlinkFeed({ symbol: symbol, asset: asset, feed: feed }));
 
         feedBySymbol[symbol] = index;
         if (asset != address(0)) {
@@ -93,16 +70,11 @@ contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
         return chainlinkFeeds[index];
     }
 
-    function getFeed(string memory symbol)
-        public
-        view
-        returns (ChainlinkFeed memory)
-    {
+    function getFeed(string memory symbol) public view returns (ChainlinkFeed memory) {
         ChainlinkFeed memory info = chainlinkFeeds[feedBySymbol[symbol]];
 
         require(
-            keccak256(abi.encodePacked(info.symbol)) ==
-                keccak256(abi.encodePacked(symbol)),
+            keccak256(abi.encodePacked(info.symbol)) == keccak256(abi.encodePacked(symbol)),
             "ChainlinkRegistry: cannot locate feed by symbol"
         );
 
@@ -112,41 +84,26 @@ contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
     function getFeed(address asset) public view returns (ChainlinkFeed memory) {
         ChainlinkFeed memory info = chainlinkFeeds[feedByAsset[asset]];
 
-        require(
-            info.asset == asset,
-            "ChainlinkRegistry: cannot locate feed by asset"
-        );
+        require(info.asset == asset, "ChainlinkRegistry: cannot locate feed by asset");
 
         return info;
     }
 
-    function getPrice(uint256 index)
-        public
-        view
-        returns (uint256 price, uint8 decimals)
-    {
+    function getPrice(uint256 index) public view returns (uint256 price, uint8 decimals) {
         ChainlinkFeed memory info = getFeed(index);
 
         price = _getPrice(info.feed);
         decimals = _getDecimals(info.feed);
     }
 
-    function getPrice(address asset)
-        public
-        view
-        returns (uint256 price, uint8 decimals)
-    {
+    function getPrice(address asset) public view returns (uint256 price, uint8 decimals) {
         ChainlinkFeed memory info = getFeed(asset);
 
         price = _getPrice(info.feed);
         decimals = _getDecimals(info.feed);
     }
 
-    function getPrice(string memory symbol)
-        public
-        view
-        returns (uint256 price, uint8 decimals)
-    {
+    function getPrice(string memory symbol) public view returns (uint256 price, uint8 decimals) {
         ChainlinkFeed memory info = getFeed(symbol);
 
         price = _getPrice(info.feed);
@@ -174,11 +131,7 @@ contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
         return uint256(value);
     }
 
-    function _getDecimals(address _feed)
-        internal
-        view
-        returns (uint8 _decimals)
-    {
+    function _getDecimals(address _feed) internal view returns (uint8 _decimals) {
         return AggregatorV3Interface(_feed).decimals();
     }
 }

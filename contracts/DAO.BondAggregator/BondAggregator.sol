@@ -12,10 +12,7 @@ interface IRedeemHelper {
 }
 
 interface ITreasury {
-    function isLiquidityDepositor(address depositor)
-        external
-        view
-        returns (bool);
+    function isLiquidityDepositor(address depositor) external view returns (bool);
 
     function isReserveDepositor(address depositor) external view returns (bool);
 
@@ -49,15 +46,9 @@ interface IBond {
 
     function maxPayout() external view returns (uint256);
 
-    function pendingPayoutFor(address depositor)
-        external
-        view
-        returns (uint256 pendingPayout_);
+    function pendingPayoutFor(address depositor) external view returns (uint256 pendingPayout_);
 
-    function percentVestedFor(address depositor)
-        external
-        view
-        returns (uint256 percentVested_);
+    function percentVestedFor(address depositor) external view returns (uint256 percentVested_);
 
     function principle() external view returns (address);
 
@@ -67,12 +58,9 @@ interface IBond {
 }
 
 contract BondAggregator {
-    IRedeemHelper public constant REEDEM_HELPER =
-        IRedeemHelper(0x9d1530475b6282Bd92da5628E36052f70C56A208);
-    ITreasury public constant TREASURY =
-        ITreasury(0x6A654D988eEBCD9FfB48ECd5AF9Bd79e090D8347);
-    IBondInformationHelper HELPER =
-        IBondInformationHelper(0xd915Aff2F6AFB96F4d8765C663b60c8a5AdC6729);
+    IRedeemHelper public constant REEDEM_HELPER = IRedeemHelper(0x9d1530475b6282Bd92da5628E36052f70C56A208);
+    ITreasury public constant TREASURY = ITreasury(0x6A654D988eEBCD9FfB48ECd5AF9Bd79e090D8347);
+    IBondInformationHelper HELPER = IBondInformationHelper(0xd915Aff2F6AFB96F4d8765C663b60c8a5AdC6729);
 
     struct BondInformation {
         address bond;
@@ -137,11 +125,7 @@ contract BondAggregator {
         return result;
     }
 
-    function bondDetails(address _bond)
-        public
-        view
-        returns (BondInformation memory)
-    {
+    function bondDetails(address _bond) public view returns (BondInformation memory) {
         IBond bond = IBond(_bond);
 
         bool isLP = false;
@@ -168,19 +152,10 @@ contract BondAggregator {
             });
     }
 
-    function bondInfoForDepositor(address _bond, address depositor)
-        public
-        view
-        returns (DepositorBondInfo memory)
-    {
+    function bondInfoForDepositor(address _bond, address depositor) public view returns (DepositorBondInfo memory) {
         IBond bond = IBond(_bond);
 
-        (
-            uint256 payout,
-            uint256 vesting,
-            uint256 lastBlock,
-            uint256 pricePaid
-        ) = bond.bondInfo(depositor);
+        (uint256 payout, uint256 vesting, uint256 lastBlock, uint256 pricePaid) = bond.bondInfo(depositor);
 
         return
             DepositorBondInfo({
@@ -194,15 +169,9 @@ contract BondAggregator {
             });
     }
 
-    function activeBondsInfoForDepositor(address depositor)
-        external
-        view
-        returns (DepositorBondInfo[] memory)
-    {
+    function activeBondsInfoForDepositor(address depositor) external view returns (DepositorBondInfo[] memory) {
         address[] memory bonds = activeBonds();
-        DepositorBondInfo[] memory results = new DepositorBondInfo[](
-            bonds.length
-        );
+        DepositorBondInfo[] memory results = new DepositorBondInfo[](bonds.length);
 
         for (uint256 i = 0; i < bonds.length; i++) {
             results[i] = bondInfoForDepositor(bonds[i], depositor);
@@ -211,11 +180,7 @@ contract BondAggregator {
         return results;
     }
 
-    function activeBondsDetails()
-        external
-        view
-        returns (BondInformation[] memory)
-    {
+    function activeBondsDetails() external view returns (BondInformation[] memory) {
         address[] memory bonds = activeBonds();
         BondInformation[] memory results = new BondInformation[](bonds.length);
 

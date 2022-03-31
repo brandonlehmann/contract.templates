@@ -9,10 +9,7 @@ contract SimpleRNG is ISimpleRNG, Ownable {
     address[] public feeds;
 
     function addFeed(address feed) public onlyOwner {
-        require(
-            AggregatorV3Interface(feed).version() != 0,
-            "Does not appear to be a chainlink feed"
-        );
+        require(AggregatorV3Interface(feed).version() != 0, "Does not appear to be a chainlink feed");
         feeds.push(feed);
     }
 
@@ -27,44 +24,20 @@ contract SimpleRNG is ISimpleRNG, Ownable {
                 uint256 updatedAt,
                 uint80 answeredInRound
             ) = AggregatorV3Interface(feeds[i]).latestRoundData();
-            tmp[i] = keccak256(
-                abi.encodePacked(
-                    roundId,
-                    answer,
-                    startedAt,
-                    updatedAt,
-                    answeredInRound
-                )
-            );
+            tmp[i] = keccak256(abi.encodePacked(roundId, answer, startedAt, updatedAt, answeredInRound));
         }
 
         return keccak256(abi.encodePacked(address(this), tmp));
     }
 
     function getRandom() public view returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    getEntropy(),
-                    block.number,
-                    block.timestamp,
-                    msg.sender,
-                    block.difficulty
-                )
-            );
+        return keccak256(abi.encodePacked(getEntropy(), block.number, block.timestamp, msg.sender, block.difficulty));
     }
 
     function getRandom(uint256 seed) public view returns (bytes32) {
         return
             keccak256(
-                abi.encodePacked(
-                    getEntropy(),
-                    block.number,
-                    block.timestamp,
-                    msg.sender,
-                    block.difficulty,
-                    seed
-                )
+                abi.encodePacked(getEntropy(), block.number, block.timestamp, msg.sender, block.difficulty, seed)
             );
     }
 }

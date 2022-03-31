@@ -45,8 +45,7 @@ contract DAOInformationHelper is IDAOInformationHelper {
             uint256 stakingBalance
         )
     {
-        IStakingContract.Epoch memory epoch = IStakingContract(stakingContract)
-            .epoch();
+        IStakingContract.Epoch memory epoch = IStakingContract(stakingContract).epoch();
 
         epochNumber = epoch.number;
         epochLength = epoch.length;

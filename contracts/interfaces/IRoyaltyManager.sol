@@ -4,15 +4,9 @@ pragma solidity ^0.8.10;
 interface IRoyaltyManager {
     function baseRoyaltyReceiver() external view returns (address);
 
-    function knownRoyaltyReceivers(address account)
-        external
-        view
-        returns (address);
+    function knownRoyaltyReceivers(address account) external view returns (address);
 
-    function tokenRoyaltyReceiver(uint256 tokenId)
-        external
-        view
-        returns (address);
+    function tokenRoyaltyReceiver(uint256 tokenId) external view returns (address);
 
     function initialize(
         address account1,

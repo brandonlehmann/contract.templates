@@ -32,11 +32,7 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
 
     event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address to, uint256 amount);
-    event ERC20PaymentReleased(
-        address indexed token,
-        address to,
-        uint256 amount
-    );
+    event ERC20PaymentReleased(address indexed token, address to, uint256 amount);
     event PaymentReceived(address from, uint256 amount);
 
     uint256 private _totalShares;
@@ -65,14 +61,8 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
      * All addresses in `payees` must be non-zero. Both arrays must have the same non-zero length, and there must be no
      * duplicates in `payees`.
      */
-    function initialize(address[] memory payees, uint256[] memory shares_)
-        public
-        initializer
-    {
-        require(
-            payees.length == shares_.length,
-            "PaymentSplitter: payees and shares length mismatch"
-        );
+    function initialize(address[] memory payees, uint256[] memory shares_) public initializer {
+        require(payees.length == shares_.length, "PaymentSplitter: payees and shares length mismatch");
         require(payees.length > 0, "PaymentSplitter: no payees");
 
         for (uint256 i = 0; i < payees.length; i++) {
@@ -88,11 +78,7 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
      *
      * `payee` must be non-zero and the payee must not already exist
      */
-    function addPayee(address payee_, uint256 shares_)
-        public
-        onlyOwner
-        whenInitialized
-    {
+    function addPayee(address payee_, uint256 shares_) public onlyOwner whenInitialized {
         _addPayee(payee_, shares_);
     }
 
@@ -153,11 +139,7 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
      * @dev Getter for the amount of `token` tokens already released to a payee. `token` should be the address of an
      * IERC20 contract.
      */
-    function released(address token, address account)
-        public
-        view
-        returns (uint256)
-    {
+    function released(address token, address account) public view returns (uint256) {
         return _erc20Released[token][account];
     }
 
@@ -178,20 +160,14 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
         return _pendingPayment(account, totalReceived, released(account));
     }
 
-    function pending(address token, address account)
-        public
-        view
-        returns (uint256)
-    {
+    function pending(address token, address account) public view returns (uint256) {
         if (_shares[account] == 0) {
             return 0;
         }
 
-        uint256 totalReceived = IERC20(token).balanceOf(address(this)) +
-            totalReleased(token);
+        uint256 totalReceived = IERC20(token).balanceOf(address(this)) + totalReleased(token);
 
-        return
-            _pendingPayment(account, totalReceived, released(token, account));
+        return _pendingPayment(account, totalReceived, released(token, account));
     }
 
     function releaseAll() public virtual {
@@ -224,7 +200,7 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
         _released[account] += payment;
         _totalReleased += payment;
 
-        (bool sent, ) = account.call{value: payment}("");
+        (bool sent, ) = account.call{ value: payment }("");
 
         if (sent) {
             emit PaymentReleased(account, payment);
@@ -264,8 +240,7 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
         uint256 totalReceived,
         uint256 alreadyReleased
     ) private view returns (uint256) {
-        return
-            (totalReceived * _shares[account]) / _totalShares - alreadyReleased;
+        return (totalReceived * _shares[account]) / _totalShares - alreadyReleased;
     }
 
     /**
@@ -274,15 +249,9 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
      * @param shares_ The number of shares owned by the payee.
      */
     function _addPayee(address account, uint256 shares_) private {
-        require(
-            account != address(0),
-            "PaymentSplitter: account is the zero address"
-        );
+        require(account != address(0), "PaymentSplitter: account is the zero address");
         require(shares_ > 0, "PaymentSplitter: shares are 0");
-        require(
-            _shares[account] == 0,
-            "PaymentSplitter: account already has shares"
-        );
+        require(_shares[account] == 0, "PaymentSplitter: account already has shares");
 
         _payees.push(account);
         _shares[account] = shares_;
@@ -290,11 +259,7 @@ contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
         emit PayeeAdded(account, shares_);
     }
 
-    function transferOwnership(address newOwner)
-        public
-        override(IPaymentSplitter, Ownable)
-        onlyOwner
-    {
+    function transferOwnership(address newOwner) public override(IPaymentSplitter, Ownable) onlyOwner {
         super._transferOwnership(newOwner);
     }
 }

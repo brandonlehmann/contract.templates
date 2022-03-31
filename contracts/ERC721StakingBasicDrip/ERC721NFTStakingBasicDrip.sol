@@ -12,44 +12,17 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    event Stake(
-        address indexed owner,
-        address indexed nftContract,
-        uint256 indexed tokenId,
-        address rewardToken
-    );
-    event UnStake(
-        address indexed owner,
-        address indexed nftContract,
-        uint256 indexed tokenId,
-        address rewardToken
-    );
-    event RewardWalletChanged(
-        address indexed oldRewardWallet,
-        address indexed newRewardWallet
-    );
+    event Stake(address indexed owner, address indexed nftContract, uint256 indexed tokenId, address rewardToken);
+    event UnStake(address indexed owner, address indexed nftContract, uint256 indexed tokenId, address rewardToken);
+    event RewardWalletChanged(address indexed oldRewardWallet, address indexed newRewardWallet);
     event MinimumStakingTimeChanged(uint256 indexed oldTime, uint256 newTime);
     event PermittedRewardToken(address indexed token, uint256 dripRate);
-    event ChangeDripRate(
-        address indexed token,
-        uint256 oldDripRate,
-        uint256 newDripRate
-    );
+    event ChangeDripRate(address indexed token, uint256 oldDripRate, uint256 newDripRate);
     event DeniedRewardToken(address indexed token, uint256 dripRate);
     event PermittedNFTContract(address indexed nftContract);
     event DeniedNFTContract(address indexed nftContract);
-    event ClaimRewards(
-        bytes32 indexed stakeId,
-        address indexed owner,
-        uint256 indexed amount
-    );
-    event ReceivedERC721(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes data,
-        uint256 gas
-    );
+    event ClaimRewards(bytes32 indexed stakeId, address indexed owner, uint256 indexed amount);
+    event ReceivedERC721(address operator, address from, uint256 tokenId, bytes data, uint256 gas);
 
     // holds the list of permitted NFTs
     EnumerableSet.AddressSet private permittedNFTs;
@@ -102,9 +75,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
 
     constructor(address _rewardWallet) {
         // if we specify a null address for the reward wallet, then we'll use ourself
-        rewardWallet = (_rewardWallet != address(0))
-            ? _rewardWallet
-            : address(this);
+        rewardWallet = (_rewardWallet != address(0)) ? _rewardWallet : address(this);
 
         MINIMUM_STAKING_TIME_FOR_REWARDS = 24 hours;
 
@@ -208,14 +179,8 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     /**
      * @dev updates the minimum staking time for rewards
      */
-    function setMinimumStakingTimeForRewards(uint256 minimumStakingTime)
-        public
-        onlyOwner
-    {
-        require(
-            minimumStakingTime >= 900,
-            "must be at least 900 seconds due to block timestamp variations"
-        );
+    function setMinimumStakingTimeForRewards(uint256 minimumStakingTime) public onlyOwner {
+        require(minimumStakingTime >= 900, "must be at least 900 seconds due to block timestamp variations");
 
         uint256 old = MINIMUM_STAKING_TIME_FOR_REWARDS;
         MINIMUM_STAKING_TIME_FOR_REWARDS = minimumStakingTime;
@@ -235,18 +200,11 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     /**
      * @dev calculates the claimable balance for the given stake ID
      */
-    function _claimableBalance(bytes32 stakeId)
-        internal
-        view
-        returns (uint256)
-    {
+    function _claimableBalance(bytes32 stakeId) internal view returns (uint256) {
         StakedNFT memory info = stakedNFTs[stakeId];
 
         // if they haven't staked long enough, their claimable rewards are 0
-        if (
-            block.timestamp <
-            info.stakedTimestamp + MINIMUM_STAKING_TIME_FOR_REWARDS
-        ) {
+        if (block.timestamp < info.stakedTimestamp + MINIMUM_STAKING_TIME_FOR_REWARDS) {
             return 0;
         }
 
@@ -260,11 +218,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
     /**
      * @dev returns all of the claimable stakes for the specified account
      */
-    function claimable(address account)
-        public
-        view
-        returns (ClaimableInfo[] memory)
-    {
+    function claimable(address account) public view returns (ClaimableInfo[] memory) {
         // retrieve all of the stake ids for the caller
         bytes32[] memory ids = stakeIds(account);
 
@@ -325,9 +279,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // if we are to pull funds from a reward wallet and it doesn't have permission
         // to use those funds then let's go ahead and return
         if (
-            rewardWallet != address(this) &&
-            info.rewardToken.allowance(rewardWallet, address(this)) <
-            _claimableAmount
+            rewardWallet != address(this) && info.rewardToken.allowance(rewardWallet, address(this)) < _claimableAmount
         ) {
             return;
         }
@@ -343,11 +295,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
 
         if (rewardWallet != address(this)) {
             // transfer the claimable rewards to the owner from the reward wallet
-            info.rewardToken.safeTransferFrom(
-                rewardWallet,
-                info.owner,
-                _claimableAmount
-            );
+            info.rewardToken.safeTransferFrom(rewardWallet, info.owner, _claimableAmount);
         } else {
             // else, transfer the rewards to the owner from the balance
             // of the token held by the contract
@@ -364,16 +312,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         address nftContract,
         uint256 tokenId
     ) internal view returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    owner,
-                    nftContract,
-                    tokenId,
-                    block.timestamp,
-                    block.number
-                )
-            );
+        return keccak256(abi.encodePacked(owner, nftContract, tokenId, block.timestamp, block.number));
     }
 
     /**
@@ -388,14 +327,8 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         uint256 tokenId,
         IERC20 rewardToken
     ) public returns (bytes32) {
-        require(
-            permittedNFTs.contains(address(nftContract)),
-            "NFT is not permitted to be staked"
-        );
-        require(
-            permittedRewardTokens.contains(address(rewardToken)),
-            "Reward token is not permitted"
-        );
+        require(permittedNFTs.contains(address(nftContract)), "NFT is not permitted to be staked");
+        require(permittedRewardTokens.contains(address(rewardToken)), "Reward token is not permitted");
         require(
             nftContract.isApprovedForAll(_msgSender(), address(this)) ||
                 nftContract.getApproved(tokenId) == address(this),
@@ -406,11 +339,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         nftContract.safeTransferFrom(_msgSender(), address(this), tokenId);
 
         // generate the stake ID
-        bytes32 stakeId = _generateStakeId(
-            _msgSender(),
-            address(nftContract),
-            tokenId
-        );
+        bytes32 stakeId = _generateStakeId(_msgSender(), address(nftContract), tokenId);
 
         // add the stake Id record
         stakedNFTs[stakeId] = StakedNFT({
@@ -429,12 +358,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // increment the number of stakes for the given reward token
         stakesPerRewardToken[address(rewardToken)] += 1;
 
-        emit Stake(
-            _msgSender(),
-            address(nftContract),
-            tokenId,
-            address(rewardToken)
-        );
+        emit Stake(_msgSender(), address(nftContract), tokenId, address(rewardToken));
 
         return stakeId;
     }
@@ -443,10 +367,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
      * @dev allows the user to unstake their NFT using the specified stake ID
      */
     function unstake(bytes32 stakeId) public {
-        require( // this also implicitly requires that the stake id exists
-            stakedNFTs[stakeId].owner == _msgSender(),
-            "not the owner of the specified stake id"
-        );
+        require(stakedNFTs[stakeId].owner == _msgSender(), "not the owner of the specified stake id"); // this also implicitly requires that the stake id exists
 
         // pull the staked NFT info
         StakedNFT memory info = stakedNFTs[stakeId];
@@ -464,18 +385,9 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         stakesPerRewardToken[address(info.rewardToken)] -= 1;
 
         // transfer the NFT back to the user
-        info.nftContract.safeTransferFrom(
-            address(this),
-            info.owner,
-            info.tokenId
-        );
+        info.nftContract.safeTransferFrom(address(this), info.owner, info.tokenId);
 
-        emit UnStake(
-            info.owner,
-            address(info.nftContract),
-            info.tokenId,
-            address(info.rewardToken)
-        );
+        emit UnStake(info.owner, address(info.nftContract), info.tokenId, address(info.rewardToken));
     }
 
     /****** MANAGEMENT OF PERMITTED REWARD TOKENS ******/
@@ -501,14 +413,8 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
      *          a dripRate of 1 would drip 0.000000000000000001 a second per NFT
      *
      */
-    function permitRewardToken(address token, uint256 amountOfTokenPerDayPerNFT)
-        public
-        onlyOwner
-    {
-        require(
-            !permittedRewardTokens.contains(token),
-            "Reward token is already permitted"
-        );
+    function permitRewardToken(address token, uint256 amountOfTokenPerDayPerNFT) public onlyOwner {
+        require(!permittedRewardTokens.contains(token), "Reward token is already permitted");
 
         permittedRewardTokens.add(token);
 
@@ -523,10 +429,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         // set the drip rate based upon the amount released per day divided by the seconds in a day
         rewardTokenDripRate[token] = amountOfTokenPerDayPerNFT / 24 hours;
 
-        require(
-            rewardTokenDripRate[token] != 0,
-            "amountOfTokenPerDayPerNFT results in a zero (0) drip rate"
-        );
+        require(rewardTokenDripRate[token] != 0, "amountOfTokenPerDayPerNFT results in a zero (0) drip rate");
 
         emit PermittedRewardToken(token, rewardTokenDripRate[token]);
     }
@@ -541,24 +444,15 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
      *          a dripRate of 1 would drip 0.000000000000000001 a second per NFT
      *
      */
-    function setRewardTokenDripRate(
-        address token,
-        uint256 amountOfTokenPerDayPerNFT
-    ) public onlyOwner {
-        require(
-            permittedRewardTokens.contains(token),
-            "Reward token is not permitted"
-        );
+    function setRewardTokenDripRate(address token, uint256 amountOfTokenPerDayPerNFT) public onlyOwner {
+        require(permittedRewardTokens.contains(token), "Reward token is not permitted");
 
         uint256 old = rewardTokenDripRate[token];
 
         // set the drip rate based upon the amount released per day divided by the seconds in a day
         rewardTokenDripRate[token] = amountOfTokenPerDayPerNFT / 24 hours;
 
-        require(
-            rewardTokenDripRate[token] != 0,
-            "amountOfTokenPerDayPerNFT results in a zero (0) drip rate"
-        );
+        require(rewardTokenDripRate[token] != 0, "amountOfTokenPerDayPerNFT results in a zero (0) drip rate");
 
         emit ChangeDripRate(token, old, rewardTokenDripRate[token]);
     }
@@ -578,10 +472,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
      * - Token must not be currently used by a staked user
      */
     function denyRewardToken(address token) public onlyOwner {
-        require(
-            permittedRewardTokens.contains(token),
-            "Reward token is not permitted"
-        );
+        require(permittedRewardTokens.contains(token), "Reward token is not permitted");
 
         uint256 dripRate = rewardTokenDripRate[token];
 
@@ -634,10 +525,7 @@ contract ERC721NFTStakingBasicDrip is IERC721Receiver, Ownable {
         uint256 tokenId,
         bytes calldata data
     ) public override returns (bytes4) {
-        require(
-            operator == address(this),
-            "Cannot send tokens to contract directly"
-        );
+        require(operator == address(this), "Cannot send tokens to contract directly");
 
         emit ReceivedERC721(operator, from, tokenId, data, gasleft());
 

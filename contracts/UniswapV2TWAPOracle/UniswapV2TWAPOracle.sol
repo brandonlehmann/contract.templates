@@ -50,10 +50,7 @@ contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
      * @param _minimumUpdateInterval how often to permit updates to the TWAP (seconds)
      *                               If set to 0, will use the default of 5 minutes
      */
-    function initialize(address _inToken, uint256 _minimumUpdateInterval)
-        public
-        initializer
-    {
+    function initialize(address _inToken, uint256 _minimumUpdateInterval) public initializer {
         require(_inToken != address(0), "Base Token cannot be null address");
         TOKEN = _inToken;
 
@@ -67,11 +64,7 @@ contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
     /**
      * @dev returns the TWAP for the provided pair as of the last update
      */
-    function getSafePrice(address _pair)
-        public
-        view
-        returns (uint256 _amountOut)
-    {
+    function getSafePrice(address _pair) public view returns (uint256 _amountOut) {
         LastValue memory _lastValue = LAST_VALUES[IUniswapV2Pair(_pair)];
 
         uint256 amountIn = 10**IERC20Metadata(TOKEN).decimals();
@@ -89,46 +82,28 @@ contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
     /**
      * @dev returns the current "unsafe" price that can be easily manipulated
      */
-    function getCurrentPrice(address _pair)
-        public
-        view
-        returns (uint256 _amountOut)
-    {
+    function getCurrentPrice(address _pair) public view returns (uint256 _amountOut) {
         IUniswapV2Pair pair = IUniswapV2Pair(_pair);
 
         (uint256 reserves0, uint256 reserves1, ) = pair.getReserves();
 
         // simple spot pricing calculation
         if (TOKEN == pair.token0()) {
-            _amountOut = _divide(
-                reserves1,
-                reserves0,
-                IERC20Metadata(pair.token1()).decimals()
-            );
+            _amountOut = _divide(reserves1, reserves0, IERC20Metadata(pair.token1()).decimals());
         } else {
             require(TOKEN == pair.token1(), "INVALID PAIR");
-            _amountOut = _divide(
-                reserves0,
-                reserves1,
-                IERC20Metadata(pair.token0()).decimals()
-            );
+            _amountOut = _divide(reserves0, reserves1, IERC20Metadata(pair.token0()).decimals());
         }
     }
 
     /**
      * @dev updates the TWAP (if enough time has lapsed) and returns the current safe price
      */
-    function updateSafePrice(address pair)
-        public
-        whenInitialized
-        returns (uint256 _amountOut)
-    {
+    function updateSafePrice(address pair) public whenInitialized returns (uint256 _amountOut) {
         // loads the pair if it is not currently tracked
         _loadPair(IUniswapV2Pair(pair));
 
-        (LastValue memory _lastValue, uint32 timeElapsed) = _getCurrentValues(
-            IUniswapV2Pair(pair)
-        );
+        (LastValue memory _lastValue, uint32 timeElapsed) = _getCurrentValues(IUniswapV2Pair(pair));
 
         // ensure that at least one full MINIMUM_UPDATE_INTERVAL has passed since the last update
         if (timeElapsed < MINIMUM_UPDATE_INTERVAL) {
@@ -174,24 +149,16 @@ contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
         price1Cumulative = IUniswapV2Pair(pair).price1CumulativeLast();
 
         // if time has elapsed since the last update on the pair, mock the accumulated price values
-        (
-            uint112 reserve0,
-            uint112 reserve1,
-            uint32 blockTimestampLast
-        ) = IUniswapV2Pair(pair).getReserves();
+        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IUniswapV2Pair(pair).getReserves();
 
         if (blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
             uint32 timeElapsed = blockTimestamp - blockTimestampLast;
             // addition overflow is desired
             // counterfactual
-            price0Cumulative +=
-                uint256(FixedPoint.fraction(reserve1, reserve0)._x) *
-                timeElapsed;
+            price0Cumulative += uint256(FixedPoint.fraction(reserve1, reserve0)._x) * timeElapsed;
             // counterfactual
-            price1Cumulative +=
-                uint256(FixedPoint.fraction(reserve0, reserve1)._x) *
-                timeElapsed;
+            price1Cumulative += uint256(FixedPoint.fraction(reserve0, reserve1)._x) * timeElapsed;
         }
     }
 
@@ -210,18 +177,10 @@ contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
      * @dev retrieves an updated LastValue structure for current pair values
      * that can be used elsewhere in further calculations
      */
-    function _getCurrentValues(IUniswapV2Pair pair)
-        internal
-        view
-        returns (LastValue memory, uint32 timeElapsed)
-    {
+    function _getCurrentValues(IUniswapV2Pair pair) internal view returns (LastValue memory, uint32 timeElapsed) {
         LastValue memory _lastValue = LAST_VALUES[pair];
 
-        (
-            uint256 price0Cumulative,
-            uint256 price1Cumulative,
-            uint32 blockTimestamp
-        ) = _currentCumulativePrices(pair);
+        (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = _currentCumulativePrices(pair);
 
         timeElapsed = blockTimestamp - _lastValue.blockTimestamp;
 
@@ -234,15 +193,11 @@ contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
         // cumulative price is in (uq112x112 price * seconds) units so we simply wrap
         // it after division by time elapsed
         _lastValue.price0Average = FixedPoint.uq112x112(
-            uint224(
-                (price0Cumulative - _lastValue.price0Cumulative) / timeElapsed
-            )
+            uint224((price0Cumulative - _lastValue.price0Cumulative) / timeElapsed)
         );
 
         _lastValue.price1Average = FixedPoint.uq112x112(
-            uint224(
-                (price1Cumulative - _lastValue.price1Cumulative) / timeElapsed
-            )
+            uint224((price1Cumulative - _lastValue.price1Cumulative) / timeElapsed)
         );
 
         // update values

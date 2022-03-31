@@ -1,4 +1,16 @@
 {
     "plugins": ["prettier-plugin-jsdoc"],
-    "tabWidth": 4
+    "tabWidth": 4,
+    "overrides": [
+        {
+            "files": "*.sol",
+            "options": {
+                "printWidth": 120,
+                "tabWidth": 4,
+                "useTabs": false,
+                "bracketSpacing": true,
+                "bracketSameLine": true
+            }
+        }
+    ]
 }

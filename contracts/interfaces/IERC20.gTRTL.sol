@@ -16,10 +16,7 @@ interface gTRTL is IAccessControlEnumerable, IERC20Permit, IERC20Metadata {
 
     function getCurrentSnapshotId() external view returns (uint256);
 
-    function balanceOfAt(address account, uint256 snapshotId)
-        external
-        view
-        returns (uint256);
+    function balanceOfAt(address account, uint256 snapshotId) external view returns (uint256);
 
     function totalSupplyAt(uint256 snapshotId) external view returns (uint256);
 }

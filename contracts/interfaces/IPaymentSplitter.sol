@@ -4,8 +4,7 @@ pragma solidity ^0.8.10;
 interface IPaymentSplitter {
     function initialize() external;
 
-    function initialize(address[] memory payees, uint256[] memory shares_)
-        external;
+    function initialize(address[] memory payees, uint256[] memory shares_) external;
 
     function addPayee(address payee_, uint256 shares_) external;
 
@@ -21,19 +20,13 @@ interface IPaymentSplitter {
 
     function released(address account) external view returns (uint256);
 
-    function released(address token, address account)
-        external
-        view
-        returns (uint256);
+    function released(address token, address account) external view returns (uint256);
 
     function payee(uint256 index) external view returns (address);
 
     function pending(address account) external view returns (uint256);
 
-    function pending(address token, address account)
-        external
-        view
-        returns (uint256);
+    function pending(address token, address account) external view returns (uint256);
 
     function releaseAll() external;
 

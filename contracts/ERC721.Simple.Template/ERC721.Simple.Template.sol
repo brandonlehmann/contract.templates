@@ -56,14 +56,7 @@ contract ERC721SimpleTemplate is
         _unpause();
     }
 
-    function mint(uint256 count)
-        public
-        payable
-        virtual
-        whenNotPaused
-        whenInitialized
-        returns (uint256[] memory)
-    {
+    function mint(uint256 count) public payable virtual whenNotPaused whenInitialized returns (uint256[] memory) {
         count;
         revert("not implemented");
     }
@@ -77,10 +70,7 @@ contract ERC721SimpleTemplate is
         returns (uint256[] memory)
     {
         require(count != 0, "ERC20: must mint at least one");
-        require(
-            count <= MAX_TOKENS_PER_MINT,
-            "ERC721: max tokens per mint exceeded"
-        );
+        require(count <= MAX_TOKENS_PER_MINT, "ERC721: max tokens per mint exceeded");
 
         uint256[] memory tokenIds = new uint256[](count);
 
@@ -101,37 +91,18 @@ contract ERC721SimpleTemplate is
         return tokenId;
     }
 
-    function setBaseURI(string memory _base_uri)
-        public
-        onlyOwner
-        whenInitialized
-    {
+    function setBaseURI(string memory _base_uri) public onlyOwner whenInitialized {
         BASE_URI = _base_uri;
     }
 
-    function setURIExtension(string memory _uri_extension)
-        public
-        onlyOwner
-        whenInitialized
-    {
+    function setURIExtension(string memory _uri_extension) public onlyOwner whenInitialized {
         URI_EXTENSION = _uri_extension;
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, IERC721SimpleTemplate)
-        returns (string memory)
-    {
-        require(
-            _exists(tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
-        );
+    function tokenURI(uint256 tokenId) public view override(ERC721, IERC721SimpleTemplate) returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
-        return
-            string(
-                abi.encodePacked(BASE_URI, tokenId.toString(), URI_EXTENSION)
-            );
+        return string(abi.encodePacked(BASE_URI, tokenId.toString(), URI_EXTENSION));
     }
 
     /****** INTERNAL OVERRIDES ******/

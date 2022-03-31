@@ -6,10 +6,7 @@ interface IWhitelistManager {
 
     function add(address account, uint256 _count) external returns (bool);
 
-    function check(address account)
-        external
-        view
-        returns (bool _exists, uint256 _count);
+    function check(address account) external view returns (bool _exists, uint256 _count);
 
     function contains(address account) external view returns (bool);
 
@@ -19,15 +16,9 @@ interface IWhitelistManager {
 
     function decrement(address account, uint256 _count) external;
 
-    function entry(address account)
-        external
-        view
-        returns (address _account, uint256 _count);
+    function entry(address account) external view returns (address _account, uint256 _count);
 
-    function entry(uint256 index)
-        external
-        view
-        returns (address _account, uint256 _count);
+    function entry(uint256 index) external view returns (address _account, uint256 _count);
 
     function pause() external;
 

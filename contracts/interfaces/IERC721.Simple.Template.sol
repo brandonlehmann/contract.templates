@@ -25,9 +25,7 @@ interface IERC721SimpleTemplate is IERC721Enumerable {
 
     function mint(uint256 count) external payable returns (uint256[] memory);
 
-    function adminMint(address _to, uint256 count)
-        external
-        returns (uint256[] memory);
+    function adminMint(address _to, uint256 count) external returns (uint256[] memory);
 
     function setBaseURI(string memory) external;
 

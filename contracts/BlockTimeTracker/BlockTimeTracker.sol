@@ -34,12 +34,7 @@ contract BlockTimeTracker is IBlockTimeTracker, Initializable, Ownable {
      * the fixed floating point representation of the value
      */
     function average(uint8 precision) public view returns (uint256) {
-        return
-            divide(
-                (block.number - startBlock),
-                (block.timestamp - startTimestamp),
-                precision
-            );
+        return divide((block.number - startBlock), (block.timestamp - startTimestamp), precision);
     }
 
     /**

@@ -7,12 +7,7 @@ import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IWhitelistManager.sol";
 
-contract WhitelistManager is
-    IWhitelistManager,
-    Initializable,
-    Ownable,
-    Pausable
-{
+contract WhitelistManager is IWhitelistManager, Initializable, Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public constant VERSION = 2022021401;
@@ -33,12 +28,7 @@ contract WhitelistManager is
     /**
      * @dev adds an account to the whitelist with the specified count
      */
-    function add(address account, uint256 _count)
-        public
-        onlyOwner
-        whenInitialized
-        returns (bool)
-    {
+    function add(address account, uint256 _count) public onlyOwner whenInitialized returns (bool) {
         require(!_entries.contains(account), "WHITELIST: entry already exists");
         _counts[account] = _count;
         bool result = _entries.add(account);
@@ -52,11 +42,7 @@ contract WhitelistManager is
      * @dev checks to return if the specified account is in the whitelist as well
      * as returns the remaining count for the account
      */
-    function check(address account)
-        public
-        view
-        returns (bool _exists, uint256 _count)
-    {
+    function check(address account) public view returns (bool _exists, uint256 _count) {
         _exists = _entries.contains(account);
         _count = _counts[account];
     }
@@ -79,36 +65,22 @@ contract WhitelistManager is
      * @dev decrements the remaining count for the specified account
      */
     function decrement(address account) public onlyOwner whenInitialized {
-        require(
-            _counts[account] > 0,
-            "WHITELIST: not enough count remaining to satisfy request"
-        );
+        require(_counts[account] > 0, "WHITELIST: not enough count remaining to satisfy request");
         _counts[account] -= 1;
     }
 
     /**
      * @dev decrements the remaining count by the {_count} for the specified account
      */
-    function decrement(address account, uint256 _count)
-        public
-        onlyOwner
-        whenInitialized
-    {
-        require(
-            _counts[account] >= _count,
-            "WHITELIST: not enough count remaining to satisfy request"
-        );
+    function decrement(address account, uint256 _count) public onlyOwner whenInitialized {
+        require(_counts[account] >= _count, "WHITELIST: not enough count remaining to satisfy request");
         _counts[account] -= _count;
     }
 
     /**
      * @dev returns the current whitelist entry for the specified account
      */
-    function entry(address account)
-        public
-        view
-        returns (address _account, uint256 _count)
-    {
+    function entry(address account) public view returns (address _account, uint256 _count) {
         _account = account;
         _count = _counts[account];
     }
@@ -116,11 +88,7 @@ contract WhitelistManager is
     /**
      * @dev returns the current whitelist entry at the specified index
      */
-    function entry(uint256 index)
-        public
-        view
-        returns (address _account, uint256 _count)
-    {
+    function entry(uint256 index) public view returns (address _account, uint256 _count) {
         _account = _entries.at(index);
         _count = _counts[_account];
     }
@@ -135,12 +103,7 @@ contract WhitelistManager is
     /**
      * @dev returns if the whitelist is currently paused
      */
-    function paused()
-        public
-        view
-        override(IWhitelistManager, Pausable)
-        returns (bool)
-    {
+    function paused() public view override(IWhitelistManager, Pausable) returns (bool) {
         return super.paused();
     }
 
@@ -154,12 +117,7 @@ contract WhitelistManager is
     /**
      * @dev removes the specified account from the whitelist
      */
-    function remove(address account)
-        public
-        onlyOwner
-        whenInitialized
-        returns (bool)
-    {
+    function remove(address account) public onlyOwner whenInitialized returns (bool) {
         require(_entries.contains(account), "WHITELIST: entry does not exist");
         bool result = _entries.remove(account);
         if (result) {

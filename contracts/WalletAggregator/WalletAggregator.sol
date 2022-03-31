@@ -70,11 +70,7 @@ contract WalletAggregator is IWalletAggregator, Ownable {
             // if we have permission to send more than the balance in the wallet, do so
             if (allowance >= balance) {
                 // bring the tokens to the contract
-                IERC20(_token).safeTransferFrom(
-                    _wallets.at(i),
-                    address(this),
-                    balance
-                );
+                IERC20(_token).safeTransferFrom(_wallets.at(i), address(this), balance);
 
                 total += balance;
             }
@@ -100,33 +96,19 @@ contract WalletAggregator is IWalletAggregator, Ownable {
      * @dev sends the full balance of the contract for the specified token to the owner of the contract
      */
     function withdraw(address _token) public {
-        require(
-            IERC20(_token).balanceOf(address(this)) != 0,
-            "contract has no balance of token"
-        );
-        IERC20(_token).safeTransfer(
-            owner(),
-            IERC20(_token).balanceOf(address(this))
-        );
+        require(IERC20(_token).balanceOf(address(this)) != 0, "contract has no balance of token");
+        IERC20(_token).safeTransfer(owner(), IERC20(_token).balanceOf(address(this)));
     }
 
     receive() external payable {}
 
     /****** INTERNAL HELPER METHODS ******/
 
-    function _allowanceOf(address _token, address _wallet)
-        internal
-        view
-        returns (uint256)
-    {
+    function _allowanceOf(address _token, address _wallet) internal view returns (uint256) {
         return IERC20(_token).allowance(_wallet, address(this));
     }
 
-    function _balanceOf(address _token, address _wallet)
-        internal
-        view
-        returns (uint256)
-    {
+    function _balanceOf(address _token, address _wallet) internal view returns (uint256) {
         return IERC20(_token).balanceOf(_wallet);
     }
 }

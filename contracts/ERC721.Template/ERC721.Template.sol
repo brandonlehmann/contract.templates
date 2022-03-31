@@ -72,30 +72,12 @@ abstract contract ERC721Template is
         address _whitelistManager,
         uint96 _royaltyBasisPoints
     ) public onlyRole(DEFAULT_ADMIN_ROLE) initializer {
-        require(
-            _royaltyManager != address(0),
-            "RoyaltyManager cannot be null address"
-        );
-        require(
-            IRoyaltyManager(_royaltyManager).VERSION() == VERSION,
-            "RoyaltyManager is wrong version"
-        );
-        require(
-            address(_blockTimeTracker) != address(0),
-            "BlockTimeTracker cannot be null address"
-        );
-        require(
-            _blockTimeTracker.VERSION() == VERSION,
-            "BlockTimeTracker is wrong version"
-        );
-        require(
-            _whitelistManager != address(0),
-            "WhitelistManager cannot be null address"
-        );
-        require(
-            IWhitelistManager(_whitelistManager).VERSION() == VERSION,
-            "WhitelistManager is wrong version"
-        );
+        require(_royaltyManager != address(0), "RoyaltyManager cannot be null address");
+        require(IRoyaltyManager(_royaltyManager).VERSION() == VERSION, "RoyaltyManager is wrong version");
+        require(address(_blockTimeTracker) != address(0), "BlockTimeTracker cannot be null address");
+        require(_blockTimeTracker.VERSION() == VERSION, "BlockTimeTracker is wrong version");
+        require(_whitelistManager != address(0), "WhitelistManager cannot be null address");
+        require(IWhitelistManager(_whitelistManager).VERSION() == VERSION, "WhitelistManager is wrong version");
 
         MAX_SUPPLY = _maxSupply;
         MINTING_FEE = _mintingFee;
@@ -104,12 +86,7 @@ abstract contract ERC721Template is
 
         // clone the royalty manager and load it
         ROYALTY_MANAGER = _royaltyManager.clone();
-        IRoyaltyManager(ROYALTY_MANAGER).initialize(
-            _msgSender(),
-            1,
-            address(this),
-            1
-        );
+        IRoyaltyManager(ROYALTY_MANAGER).initialize(_msgSender(), 1, address(this), 1);
 
         // clone the whitelist manager and load it
         WHITELIST_MANAGER = _whitelistManager.clone();
@@ -132,35 +109,19 @@ abstract contract ERC721Template is
 
     /****** WHITELIST METHODS ******/
 
-    function addToWhitelist(address account, uint256 count)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-        whenInitialized
-    {
+    function addToWhitelist(address account, uint256 count) public onlyRole(DEFAULT_ADMIN_ROLE) whenInitialized {
         IWhitelistManager(WHITELIST_MANAGER).add(account, count);
     }
 
-    function removeFromWhitelist(address account)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-        whenInitialized
-    {
+    function removeFromWhitelist(address account) public onlyRole(DEFAULT_ADMIN_ROLE) whenInitialized {
         IWhitelistManager(WHITELIST_MANAGER).remove(account);
     }
 
-    function pauseWhitelist()
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-        whenInitialized
-    {
+    function pauseWhitelist() public onlyRole(DEFAULT_ADMIN_ROLE) whenInitialized {
         IWhitelistManager(WHITELIST_MANAGER).pause();
     }
 
-    function unpauseWhitelist()
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-        whenInitialized
-    {
+    function unpauseWhitelist() public onlyRole(DEFAULT_ADMIN_ROLE) whenInitialized {
         IWhitelistManager(WHITELIST_MANAGER).unpause();
     }
 
@@ -175,15 +136,9 @@ abstract contract ERC721Template is
      * can still call the mint method & transfer NFTs
      */
     function paused() public view override returns (bool) {
-        (bool isWhitelisted, uint256 mintsRemaining) = IWhitelistManager(
-            WHITELIST_MANAGER
-        ).check(_msgSender());
+        (bool isWhitelisted, uint256 mintsRemaining) = IWhitelistManager(WHITELIST_MANAGER).check(_msgSender());
 
-        if (
-            !IWhitelistManager(WHITELIST_MANAGER).paused() &&
-            isWhitelisted &&
-            mintsRemaining > 0
-        ) {
+        if (!IWhitelistManager(WHITELIST_MANAGER).paused() && isWhitelisted && mintsRemaining > 0) {
             return false;
         }
 
@@ -194,23 +149,10 @@ abstract contract ERC721Template is
      * @dev standard mint function that regular users call while
      * paying the appropriate mint fee to mint a number of ERC721s
      */
-    function mint(uint256 count)
-        public
-        payable
-        virtual
-        whenNotPaused
-        whenInitialized
-        returns (uint256[] memory)
-    {
+    function mint(uint256 count) public payable virtual whenNotPaused whenInitialized returns (uint256[] memory) {
         require(count != 0, "ERC721: must mint at least one");
-        require(
-            count <= MAX_TOKENS_PER_MINT,
-            "ERC721: max tokens per mint exceeded"
-        );
-        require(
-            msg.value == MINTING_FEE * count,
-            "ERC721: caller did not supply correct amount"
-        );
+        require(count <= MAX_TOKENS_PER_MINT, "ERC721: max tokens per mint exceeded");
+        require(msg.value == MINTING_FEE * count, "ERC721: caller did not supply correct amount");
 
         // if the whitelist is active and the contract is paused
         // we have to be able to reduce the number of mints available
@@ -243,10 +185,7 @@ abstract contract ERC721Template is
         returns (uint256[] memory)
     {
         require(count != 0, "ERC721: must mint at least one");
-        require(
-            count <= MAX_TOKENS_PER_MINT,
-            "ERC721: max tokens per mint exceeded"
-        );
+        require(count <= MAX_TOKENS_PER_MINT, "ERC721: max tokens per mint exceeded");
 
         uint256[] memory tokenIds = new uint256[](count);
 
@@ -273,12 +212,7 @@ abstract contract ERC721Template is
 
         uint256 tokenId = supply + 1;
 
-        address royaltyReceiver = IRoyaltyManager(ROYALTY_MANAGER).add(
-            tokenId,
-            1,
-            _to,
-            1
-        );
+        address royaltyReceiver = IRoyaltyManager(ROYALTY_MANAGER).add(tokenId, 1, _to, 1);
 
         _setTokenRoyalty(tokenId, royaltyReceiver, royaltyBasisPoints);
 
@@ -308,10 +242,7 @@ abstract contract ERC721Template is
     /**
      * @dev updates the minting fee
      */
-    function setMintFee(uint256 _minting_fee)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setMintFee(uint256 _minting_fee) public onlyRole(DEFAULT_ADMIN_ROLE) {
         MINTING_FEE = _minting_fee;
     }
 
@@ -320,20 +251,14 @@ abstract contract ERC721Template is
     /**
      * @dev updates the base URI for the token metadata to the provided URI
      */
-    function setBaseURI(string memory _base_uri)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setBaseURI(string memory _base_uri) public onlyRole(DEFAULT_ADMIN_ROLE) {
         BASE_URI = _base_uri;
     }
 
     /**
      * @dev updates the URI extension for the token meta data to the provided one
      */
-    function setURIExtension(string memory _uri_extension)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function setURIExtension(string memory _uri_extension) public onlyRole(DEFAULT_ADMIN_ROLE) {
         URI_EXTENSION = _uri_extension;
     }
 
@@ -341,18 +266,8 @@ abstract contract ERC721Template is
      * @dev Generates a masked token URI so that people cannot guess what the next
      * NFT result will be
      */
-    function _generateTokenURI(uint256 tokenId)
-        internal
-        view
-        virtual
-        returns (string memory)
-    {
-        return
-            uint256(
-                keccak256(
-                    abi.encodePacked(RANDOM_SEED.toString(), tokenId.toString())
-                )
-            ).toHexString(32);
+    function _generateTokenURI(uint256 tokenId) internal view virtual returns (string memory) {
+        return uint256(keccak256(abi.encodePacked(RANDOM_SEED.toString(), tokenId.toString()))).toHexString(32);
     }
 
     /**
@@ -372,26 +287,10 @@ abstract contract ERC721Template is
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
-        require(
-            _exists(tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
-        );
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
-        return
-            string(
-                abi.encodePacked(
-                    BASE_URI,
-                    _generateTokenURI(tokenId),
-                    URI_EXTENSION
-                )
-            );
+        return string(abi.encodePacked(BASE_URI, _generateTokenURI(tokenId), URI_EXTENSION));
     }
 
     /****** WITHDRAW METHOD ******/
@@ -402,10 +301,7 @@ abstract contract ERC721Template is
      */
     function withdraw(IERC20 token) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (address(token) != address(0)) {
-            require(
-                token.balanceOf(address(this)) != 0,
-                "contract has no balance of token"
-            );
+            require(token.balanceOf(address(this)) != 0, "contract has no balance of token");
         } else {
             require(address(this).balance != 0, "contract has no balance");
         }
@@ -456,12 +352,7 @@ abstract contract ERC721Template is
         public
         view
         virtual
-        override(
-            AccessControlEnumerable,
-            ERC721,
-            ERC721Enumerable,
-            ERC721Royalty
-        )
+        override(AccessControlEnumerable, ERC721, ERC721Enumerable, ERC721Royalty)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
