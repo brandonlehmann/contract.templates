@@ -5,7 +5,7 @@ pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "../Cloneable/Cloneable.sol";
 import "../interfaces/IPaymentSplitter.sol";
 
 /**
@@ -25,10 +25,10 @@ import "../interfaces/IPaymentSplitter.sol";
  * tokens that apply fees during transfers, are likely to not be supported as expected. If in doubt, we encourage you
  * to run tests before sending real value to this contract.
  */
-contract PaymentSplitter is IPaymentSplitter, Initializable, Ownable {
+contract PaymentSplitter is IPaymentSplitter, Cloneable, Ownable {
     using SafeERC20 for IERC20;
 
-    uint256 public constant VERSION = 2022032401;
+    uint256 public constant VERSION = 2022042201;
 
     event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address to, uint256 amount);

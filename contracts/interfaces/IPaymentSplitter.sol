@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-interface IPaymentSplitter {
+import "../interfaces/ICloneable.sol";
+
+interface IPaymentSplitter is ICloneable {
     function initialize() external;
 
     function initialize(address[] memory payees, uint256[] memory shares_) external;
