@@ -2,12 +2,12 @@
 pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/access/Ownable.sol";
-import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "../Cloneable/Cloneable.sol";
 import "../interfaces/IPriceOracle.sol";
 
-contract ChainlinkPriceOracle is IPriceOracle, Initializable, Ownable {
-    uint256 public constant VERSION = 2022021401;
+contract ChainlinkPriceOracle is IPriceOracle, Cloneable, Ownable {
+    uint256 public constant VERSION = 2022042301;
 
     address public BASE_PRICE_FEED;
 
@@ -15,6 +15,12 @@ contract ChainlinkPriceOracle is IPriceOracle, Initializable, Ownable {
 
     event UpdateValues(address indexed feed);
     event OutputDecimalsUpdated(uint8 _old, uint8 _new);
+
+    constructor() {
+        _transferOwnership(address(0));
+    }
+
+    function initialize() public initializer {}
 
     function initialize(address _base_price_feed, uint256 _unused) public initializer {
         require(_base_price_feed != address(0), "FTM PRICE FEED cannot be the null address");

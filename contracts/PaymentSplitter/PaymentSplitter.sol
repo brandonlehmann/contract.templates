@@ -28,7 +28,7 @@ import "../interfaces/IPaymentSplitter.sol";
 contract PaymentSplitter is IPaymentSplitter, Cloneable, Ownable {
     using SafeERC20 for IERC20;
 
-    uint256 public constant VERSION = 2022042201;
+    uint256 public constant VERSION = 2022042301;
 
     event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address to, uint256 amount);
@@ -44,6 +44,10 @@ contract PaymentSplitter is IPaymentSplitter, Cloneable, Ownable {
 
     mapping(address => uint256) private _erc20TotalReleased;
     mapping(address => mapping(address => uint256)) private _erc20Released;
+
+    constructor() {
+        _transferOwnership(address(0));
+    }
 
     /**
      * @dev Creates an instance of `PaymentSplitter`

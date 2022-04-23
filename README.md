@@ -27,13 +27,14 @@ To save gas when interacting with the contracts, always deploy after compiling w
 
 #### Mainnet
 
-| Contract             | Address                                       | Version    | Clonable |
-|----------------------|-----------------------------------------------|------------|----------|
-| BlockTimeTracker     | `0x06e216fB50E49C9e284dD924cb4278D7B2A714ce`  | 2022021601 | Yes      |
-| PaymentSplitter      | `0x89685876c79E7b92af7BB6077C2bE6860FCA2396`  | 2022042201 | Yes      |
-| RoyaltyManager       | `0x1092C10c4735F813bB0fcFbb11fB34Ed45C42Ff1`  | 2022021401 | Yes      |
-| WhitelistManager     | `0x3ce27770098A2413c875980AEA409966D6028660`  | 2022021401 | Yes      |
-| ChainlinkRegistry    | `0x49a2BFE2F9aC9Edf4077779E268C9b58F52df1Aa`  | 2022021401 | Yes      |
-| ERC721Snapshot       | `0xeAe39b105192ddF1331C6F534875C4ca7Ff7C113`  | 2022021401 | Yes      |
-| UniswapV2TWAPOracle  | `0x0E0Ff420EB5D6860DD3eBf3dfE745C335bCA7af7`  | 2022021401 | Yes      |
-| ChainlinkPriceOracle | `0x693f31346ecDf2EB1FBf63D0b450Ced6a7f9Cf34`  | 2022021401 | Yes      |
+| Contract             | Address                                      | Version    | Clonable |
+|----------------------|----------------------------------------------|------------|----------|
+| BlockTimeTracker     | `0x918DCd379a6669d2eF8bf73919aA07DC58C1393E` | 2022042301 | Yes      |
+| ChainlinkPriceOracle | `0x433Ae8Ba731f22377b90b7D0EeF074D2c5589941` | 2022042301 | Yes      |
+| ChainlinkRegistry    | `0x177D78a7190481C538d2Eeb0054dAB8f04d3a592` | 2022042301 | Yes      |
+| ContractRegistry     | `0xF053aC89d18b3151984fD94368296805A7bDa92F` | 2022042301 | Yes      |
+| ERC721Snapshot       | `0x88494Edc824f21C48B3f3319AF6FfAF2146aA08a` | 2022042301 | Yes      |
+| PaymentSplitter      | `0x5b9dF37fc3817e88F81F002856092f9B6B7972Ef` | 2022042201 | Yes      |
+| RoyaltyManager       | `0x773371327d8E21b67e1bDFb495122563c4cd5F9E` | 2022042301 | Yes      |
+| UniswapV2TWAPOracle  | `0xB4C489A742459c6503aBd4C1D4d9231E3F7339bb` | 2022042301 | Yes      |
+| WhitelistManager     | `0xF4cDB371Ba073d2ba710CF0959B517Ab5eE2e69F` | 2022042301 | Yes      |

@@ -90,7 +90,6 @@ abstract contract ERC721Template is
 
         // clone the whitelist manager and load it
         WHITELIST_MANAGER = _whitelistManager.clone();
-        IWhitelistManager(WHITELIST_MANAGER).pause();
 
         RANDOM_SEED = uint256(
             keccak256(
@@ -115,18 +114,6 @@ abstract contract ERC721Template is
 
     function removeFromWhitelist(address account) public onlyRole(DEFAULT_ADMIN_ROLE) whenInitialized {
         IWhitelistManager(WHITELIST_MANAGER).remove(account);
-    }
-
-    function pauseWhitelist() public onlyRole(DEFAULT_ADMIN_ROLE) whenInitialized {
-        IWhitelistManager(WHITELIST_MANAGER).pause();
-    }
-
-    function unpauseWhitelist() public onlyRole(DEFAULT_ADMIN_ROLE) whenInitialized {
-        IWhitelistManager(WHITELIST_MANAGER).unpause();
-    }
-
-    function whitelistPaused() public view whenInitialized returns (bool) {
-        return IWhitelistManager(WHITELIST_MANAGER).paused();
     }
 
     /****** MINT METHODS ******/
@@ -306,7 +293,7 @@ abstract contract ERC721Template is
             require(address(this).balance != 0, "contract has no balance");
         }
 
-        address splitter = IRoyaltyManager(ROYALTY_MANAGER).cloneSplitter();
+        address splitter = IRoyaltyManager(ROYALTY_MANAGER).PAYMENT_SPLITTER().clone();
         IPaymentSplitter(splitter).addPayee(_msgSender(), 90);
 
         if (_msgSender() != deployer) {

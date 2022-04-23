@@ -21,6 +21,7 @@ abstract contract Cloneable is ICloneable, Initializable {
             emit CloneDeployed(address(this), instance, 0x0);
         } else {
             instance = ICloneable(parent()).clone();
+            emit CloneDeployed(parent(), instance, 0x0);
         }
     }
 
@@ -37,6 +38,7 @@ abstract contract Cloneable is ICloneable, Initializable {
             emit CloneDeployed(address(this), instance, salt);
         } else {
             instance = ICloneable(parent()).cloneDeterministic(salt);
+            emit CloneDeployed(parent(), instance, salt);
         }
     }
 

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-interface IChainlinkRegistry {
+import "./ICloneable.sol";
+
+interface IChainlinkRegistry is ICloneable {
     struct ChainlinkFeed {
         string symbol;
         address asset;

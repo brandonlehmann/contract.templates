@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../@solidity-lib/contracts/libraries/FixedPoint.sol";
 import "../../@uniswap-v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "../../@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "../Cloneable/Cloneable.sol";
 import "../interfaces/IPriceOracle.sol";
 
 /**
@@ -13,10 +13,10 @@ for the basis for the below contract. ExampleOracleSimple contract has been exte
 pairs within the same contract.
 */
 
-contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
+contract UniswapV2TWAPOracle is IPriceOracle, Cloneable {
     using FixedPoint for *;
 
-    uint256 public constant VERSION = 2022021401;
+    uint256 public constant VERSION = 2022042301;
 
     struct LastValue {
         address token0;
@@ -42,6 +42,8 @@ contract UniswapV2TWAPOracle is IPriceOracle, Initializable {
     address public TOKEN;
 
     uint256 public MINIMUM_UPDATE_INTERVAL = 5 minutes;
+
+    function initialize() public initializer {}
 
     /**
      * @dev sets up the Price Oracle

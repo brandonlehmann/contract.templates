@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-interface IWhitelistManager {
+import "./ICloneable.sol";
+
+interface IWhitelistManager is ICloneable {
     function initialize() external;
 
     function add(address account, uint256 _count) external returns (bool);

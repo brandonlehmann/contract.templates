@@ -3,20 +3,24 @@ pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/security/Pausable.sol";
 import "../../@openzeppelin/contracts/access/Ownable.sol";
-import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IWhitelistManager.sol";
+import "../Cloneable/Cloneable.sol";
 
-contract WhitelistManager is IWhitelistManager, Initializable, Ownable, Pausable {
+contract WhitelistManager is IWhitelistManager, Cloneable, Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public constant VERSION = 2022021401;
+    uint256 public constant VERSION = 2022042301;
 
     event AccountAdded(address indexed account, uint256 indexed count);
     event AccountRemoved(address indexed account);
 
     EnumerableSet.AddressSet private _entries;
     mapping(address => uint256) private _counts;
+
+    constructor() {
+        _transferOwnership(address(0));
+    }
 
     /**
      * @dev initializes a the WhitelistManager after cloning

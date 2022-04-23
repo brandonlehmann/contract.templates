@@ -3,17 +3,16 @@ pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "../../@openzeppelin/contracts/proxy/Clones.sol";
-import "../interfaces/IPaymentSplitter.sol";
+import "../Cloneable/Cloneable.sol";
+import "../PaymentSplitter/PaymentSplitter.sol";
 import "../interfaces/IRoyaltyManager.sol";
 
-contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
-    using Clones for address;
+contract RoyaltyManager is IRoyaltyManager, Cloneable, Ownable {
+    event PaymentSplitterDeployed(address indexed _contract);
 
-    uint256 public constant VERSION = 2022021401;
+    uint256 public constant VERSION = 2022042301;
 
-    address public constant PAYMENT_SPLITTER = address(0x718d70C431a9cad76c1029939dE3a40E15197a0f);
+    IPaymentSplitter public immutable PAYMENT_SPLITTER;
 
     event RoyaltyDeployed(
         address indexed _contract,
@@ -28,6 +27,15 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
     mapping(address => address) public knownRoyaltyReceivers;
     mapping(uint256 => address) public tokenRoyaltyReceiver;
 
+    constructor() {
+        PAYMENT_SPLITTER = new PaymentSplitter();
+        PAYMENT_SPLITTER.initialize();
+        _transferOwnership(address(0));
+        emit PaymentSplitterDeployed(address(PAYMENT_SPLITTER));
+    }
+
+    function initialize() public initializer {}
+
     /**
      * @dev Creates an instance of `RoyaltyManager`
      */
@@ -41,6 +49,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
         IPaymentSplitter(baseRoyaltyReceiver).initialize();
         IPaymentSplitter(baseRoyaltyReceiver).addPayee(account1, shares1);
         IPaymentSplitter(baseRoyaltyReceiver).addPayee(account2, shares2);
+        IPaymentSplitter(baseRoyaltyReceiver).transferOwnership(_msgSender());
 
         emit RoyaltyDeployed(baseRoyaltyReceiver, 0, account1, account2, shares1, shares2);
 
@@ -62,6 +71,7 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
             IPaymentSplitter(knownRoyaltyReceivers[account2]).initialize();
             IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(baseRoyaltyReceiver, shares1);
             IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(account2, shares2);
+            IPaymentSplitter(knownRoyaltyReceivers[account2]).transferOwnership(_msgSender());
 
             emit RoyaltyDeployed(
                 knownRoyaltyReceivers[account2],
@@ -76,19 +86,6 @@ contract RoyaltyManager is IRoyaltyManager, Initializable, Ownable {
         tokenRoyaltyReceiver[tokenId] = account2;
 
         return knownRoyaltyReceivers[account2];
-    }
-
-    /**
-     * @dev helper method that returns a clone of a {PaymentSplitter} that
-     * is initialized and the ownership transferred to the caller
-     */
-    function cloneSplitter() public whenInitialized returns (address) {
-        address result = PAYMENT_SPLITTER.clone();
-
-        IPaymentSplitter(result).initialize();
-        IPaymentSplitter(result).transferOwnership(_msgSender());
-
-        return result;
     }
 
     /**

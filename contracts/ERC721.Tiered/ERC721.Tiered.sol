@@ -8,7 +8,8 @@ import "../../@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol
 import "../../@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../Cloneable/Cloneable.sol";
-import "../PaymentSplitter/PaymentSplitter.sol";
+import "../interfaces/IPaymentSplitter.sol";
+import "../interfaces/IContract.Registry.sol";
 
 enum TokenType {
     NATIVE,
@@ -40,6 +41,9 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     using Address for address;
     using SafeERC20 for IERC20;
     using Strings for uint256;
+
+    uint256 public constant VERSION = 2022042301;
+    bytes32 private constant PAYMENT_SPLITTER = keccak256(abi.encodePacked("PaymentSplitter"));
 
     event ChangeBurnedResupply(bool indexed _old, bool indexed _new);
     event ChangeMintPrice(uint256 indexed _old, uint256 indexed _new);
@@ -96,8 +100,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     }
 
     constructor() ERC721("", "") {
-        BASE_PAYMENT_SPLITTER = new PaymentSplitter();
-        BASE_PAYMENT_SPLITTER.initialize();
+        BASE_PAYMENT_SPLITTER = IPaymentSplitter(FTMContractRegistry.get(PAYMENT_SPLITTER));
         emit PaymentSplitterDeployed(address(BASE_PAYMENT_SPLITTER));
         _transferOwnership(address(0));
     }
@@ -183,7 +186,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     function MINT_PRICE() public view returns (uint256) {
         if (TOKEN_TYPE != TokenType.ERC721) {
             if (whitelist[_msgSender()]) {
-                return (_MINT_PRICE * _WHITELIST_DISCOUNT_BASIS) / 10_000;
+                return _MINT_PRICE - ((_MINT_PRICE * _WHITELIST_DISCOUNT_BASIS) / 10_000);
             } else {
                 return _MINT_PRICE;
             }
@@ -277,6 +280,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     }
 
     function setWhitelistDiscountBasis(uint96 basisPoints) public onlyOwner {
+        require(basisPoints <= 10_000, "Basis points must not exceed 10,000");
         uint96 old = _WHITELIST_DISCOUNT_BASIS;
         _WHITELIST_DISCOUNT_BASIS = basisPoints;
         emit ChangeWhitelistDiscountBasis(old, basisPoints);

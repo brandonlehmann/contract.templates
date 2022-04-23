@@ -5,13 +5,13 @@ import "../../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../../@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "../Cloneable/Cloneable.sol";
 import "../interfaces/IChainlinkRegistry.sol";
 
-contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
+contract ChainlinkRegistry is IChainlinkRegistry, Cloneable, Ownable {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 public constant VERSION = 2022021401;
+    uint256 public constant VERSION = 2022042301;
 
     ChainlinkFeed[] private chainlinkFeeds;
     mapping(string => uint256) private feedBySymbol;
@@ -21,6 +21,10 @@ contract ChainlinkRegistry is IChainlinkRegistry, Initializable, Ownable {
 
     event AddFeed(string indexed symbol, address indexed asset, address indexed feed);
     event RemoveFeed(string indexed symbol, address indexed assset, address indexed feed);
+
+    constructor() {
+        _transferOwnership(address(0));
+    }
 
     function initialize() public initializer {
         _transferOwnership(_msgSender());
