@@ -42,7 +42,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     using SafeERC20 for IERC20;
     using Strings for uint256;
 
-    uint256 public constant VERSION = 2022042301;
+    uint256 public constant VERSION = 2022042401;
     bytes32 private constant PAYMENT_SPLITTER = keccak256(abi.encodePacked("PaymentSplitter"));
 
     event ChangeBurnedResupply(bool indexed _old, bool indexed _new);
@@ -60,7 +60,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
         uint256 maxSupply,
         uint256 mintPrice
     );
-    event Initialized(
+    event TokenInitialized(
         string indexed name,
         string indexed symbol,
         uint256 maxSupply,
@@ -72,12 +72,12 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
 
     // fee settings
     uint256 private _MINT_PRICE;
-    uint96 private _WHITELIST_DISCOUNT_BASIS; // expressed in basis points, 2000 = 20%
+    uint96 public WHITELIST_DISCOUNT_BASIS; // expressed in basis points, 2000 = 20%
 
     // URI settings
-    string private URI_PREFIX;
-    string private URI_SUFFIX;
-    bool private URI_UNIQUE = true;
+    string public URI_PREFIX;
+    string public URI_SUFFIX;
+    bool public URI_UNIQUE = true;
 
     mapping(address => bool) public whitelist;
     mapping(address => bool) public permittedContractRecipient;
@@ -92,6 +92,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     IPaymentSplitter public immutable BASE_PAYMENT_SPLITTER;
     IPaymentSplitter public ROYALTY_RECEIVER;
     IPaymentSplitter public PROCEEDS_RECIPIENT;
+    uint96 public ROYALTY_BASIS;
     modifier whenProceedsRecipientSet() {
         if (TOKEN_TYPE != TokenType.ERC721) {
             require(address(PROCEEDS_RECIPIENT) != address(0), "Proceeds recipient is unset");
@@ -131,7 +132,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
 
         _pause(); // always start paused to bot evade
 
-        emit Initialized(name, symbol, maxSupply, paymentToken, tokenType);
+        emit TokenInitialized(name, symbol, maxSupply, paymentToken, tokenType);
     }
 
     /****** PUBLIC METHODS ******/
@@ -186,7 +187,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     function MINT_PRICE() public view returns (uint256) {
         if (TOKEN_TYPE != TokenType.ERC721) {
             if (whitelist[_msgSender()]) {
-                return _MINT_PRICE - ((_MINT_PRICE * _WHITELIST_DISCOUNT_BASIS) / 10_000);
+                return _MINT_PRICE - ((_MINT_PRICE * WHITELIST_DISCOUNT_BASIS) / 10_000);
             } else {
                 return _MINT_PRICE;
             }
@@ -262,6 +263,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
         ROYALTY_RECEIVER = IPaymentSplitter(BASE_PAYMENT_SPLITTER.clone());
         ROYALTY_RECEIVER.initialize(recipients, shares);
         _setDefaultRoyalty(address(ROYALTY_RECEIVER), basisPoints);
+        ROYALTY_BASIS = basisPoints;
         emit ChangeRoyalty(address(ROYALTY_RECEIVER), basisPoints);
     }
 
@@ -281,8 +283,8 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
 
     function setWhitelistDiscountBasis(uint96 basisPoints) public onlyOwner {
         require(basisPoints <= 10_000, "Basis points must not exceed 10,000");
-        uint96 old = _WHITELIST_DISCOUNT_BASIS;
-        _WHITELIST_DISCOUNT_BASIS = basisPoints;
+        uint96 old = WHITELIST_DISCOUNT_BASIS;
+        WHITELIST_DISCOUNT_BASIS = basisPoints;
         emit ChangeWhitelistDiscountBasis(old, basisPoints);
     }
 
