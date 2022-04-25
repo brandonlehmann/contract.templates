@@ -10,10 +10,11 @@ import "../interfaces/IRoyaltyManager.sol";
 contract RoyaltyManager is IRoyaltyManager, Cloneable, Ownable {
     event PaymentSplitterDeployed(address indexed _contract);
 
-    uint256 public constant VERSION = 2022042301;
+    uint256 public constant VERSION = 2022042501;
 
     IPaymentSplitter public immutable PAYMENT_SPLITTER;
 
+    event RoyaltyManagerInitialized(address indexed splitter, address[] indexed accounts, uint256[] indexed shares);
     event RoyaltyDeployed(
         address indexed _contract,
         uint256 indexed _tokenId,
@@ -23,8 +24,8 @@ contract RoyaltyManager is IRoyaltyManager, Cloneable, Ownable {
         uint256 shares2
     );
 
-    address public baseRoyaltyReceiver;
-    mapping(address => address) public knownRoyaltyReceivers;
+    IPaymentSplitter public baseRoyaltyReceiver;
+    mapping(address => IPaymentSplitter) public knownRoyaltyReceivers;
     mapping(uint256 => address) public tokenRoyaltyReceiver;
 
     constructor() {
@@ -39,21 +40,12 @@ contract RoyaltyManager is IRoyaltyManager, Cloneable, Ownable {
     /**
      * @dev Creates an instance of `RoyaltyManager`
      */
-    function initialize(
-        address account1,
-        uint256 shares1,
-        address account2,
-        uint256 shares2
-    ) public initializer {
-        baseRoyaltyReceiver = PAYMENT_SPLITTER.clone();
-        IPaymentSplitter(baseRoyaltyReceiver).initialize();
-        IPaymentSplitter(baseRoyaltyReceiver).addPayee(account1, shares1);
-        IPaymentSplitter(baseRoyaltyReceiver).addPayee(account2, shares2);
-        IPaymentSplitter(baseRoyaltyReceiver).transferOwnership(_msgSender());
-
-        emit RoyaltyDeployed(baseRoyaltyReceiver, 0, account1, account2, shares1, shares2);
-
+    function initialize(address[] memory accounts, uint256[] memory shares) public initializer {
+        baseRoyaltyReceiver = IPaymentSplitter(PAYMENT_SPLITTER.clone());
+        baseRoyaltyReceiver.initialize(accounts, shares);
+        baseRoyaltyReceiver.transferOwnership(_msgSender());
         _transferOwnership(_msgSender());
+        emit RoyaltyManagerInitialized(address(baseRoyaltyReceiver), accounts, shares);
     }
 
     /**
@@ -66,17 +58,17 @@ contract RoyaltyManager is IRoyaltyManager, Cloneable, Ownable {
         address account2,
         uint256 shares2
     ) public onlyOwner whenInitialized returns (address) {
-        if (knownRoyaltyReceivers[account2] == address(0)) {
-            knownRoyaltyReceivers[account2] = PAYMENT_SPLITTER.clone();
-            IPaymentSplitter(knownRoyaltyReceivers[account2]).initialize();
-            IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(baseRoyaltyReceiver, shares1);
-            IPaymentSplitter(knownRoyaltyReceivers[account2]).addPayee(account2, shares2);
-            IPaymentSplitter(knownRoyaltyReceivers[account2]).transferOwnership(_msgSender());
+        if (address(knownRoyaltyReceivers[account2]) == address(0)) {
+            knownRoyaltyReceivers[account2] = IPaymentSplitter(PAYMENT_SPLITTER.clone());
+            knownRoyaltyReceivers[account2].initialize();
+            knownRoyaltyReceivers[account2].addPayee(address(baseRoyaltyReceiver), shares1);
+            knownRoyaltyReceivers[account2].addPayee(account2, shares2);
+            knownRoyaltyReceivers[account2].transferOwnership(_msgSender());
 
             emit RoyaltyDeployed(
-                knownRoyaltyReceivers[account2],
+                address(knownRoyaltyReceivers[account2]),
                 tokenId,
-                baseRoyaltyReceiver,
+                address(baseRoyaltyReceiver),
                 account2,
                 shares1,
                 shares2
@@ -85,7 +77,7 @@ contract RoyaltyManager is IRoyaltyManager, Cloneable, Ownable {
 
         tokenRoyaltyReceiver[tokenId] = account2;
 
-        return knownRoyaltyReceivers[account2];
+        return address(knownRoyaltyReceivers[account2]);
     }
 
     /**

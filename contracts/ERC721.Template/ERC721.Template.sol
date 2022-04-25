@@ -86,7 +86,15 @@ abstract contract ERC721Template is
 
         // clone the royalty manager and load it
         ROYALTY_MANAGER = _royaltyManager.clone();
-        IRoyaltyManager(ROYALTY_MANAGER).initialize(_msgSender(), 1, address(this), 1);
+
+        address[] memory accounts = new address[](2);
+        accounts[0] = _msgSender();
+        accounts[1] = address(this);
+        uint256[] memory shares = new uint256[](2);
+        shares[0] = 1;
+        shares[1] = 1;
+
+        IRoyaltyManager(ROYALTY_MANAGER).initialize(accounts, shares);
 
         // clone the whitelist manager and load it
         WHITELIST_MANAGER = _whitelistManager.clone();

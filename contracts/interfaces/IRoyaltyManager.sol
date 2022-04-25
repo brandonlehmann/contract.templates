@@ -7,20 +7,15 @@ import "./IPaymentSplitter.sol";
 interface IRoyaltyManager is ICloneable {
     function PAYMENT_SPLITTER() external view returns (IPaymentSplitter);
 
-    function baseRoyaltyReceiver() external view returns (address);
+    function baseRoyaltyReceiver() external view returns (IPaymentSplitter);
 
-    function knownRoyaltyReceivers(address account) external view returns (address);
+    function knownRoyaltyReceivers(address account) external view returns (IPaymentSplitter);
 
     function tokenRoyaltyReceiver(uint256 tokenId) external view returns (address);
 
     function initialize() external;
 
-    function initialize(
-        address account1,
-        uint256 shares1,
-        address account2,
-        uint256 shares2
-    ) external;
+    function initialize(address[] memory accounts, uint256[] memory shares) external;
 
     function add(
         uint256 tokenId,

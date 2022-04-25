@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+// Brandon Lehmann <brandonlehmann@gmail.com>
+
 pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/proxy/Clones.sol";
@@ -8,13 +10,17 @@ import "../interfaces/ICloneable.sol";
 abstract contract Cloneable is ICloneable, Initializable {
     using Clones for address;
 
-    event CloneDeployed(address indexed deployer, address indexed parent, address indexed clone, bytes32 salt);
+    event CloneDeployed(address indexed deployer, address indexed progenitor, address indexed clone, bytes32 salt);
 
-    address public immutable parent;
-    bytes32 public constant CLONE_DEPLOYED_TOPIC = keccak256("CloneDeployed(address,address,address,bytes32)");
+    address public immutable progenitor;
+
+    modifier isCloned() {
+        require(address(this) != progenitor, "Cloneable: Contract is not a clone");
+        _;
+    }
 
     constructor() {
-        parent = address(this);
+        progenitor = address(this);
     }
 
     /**
@@ -23,8 +29,9 @@ abstract contract Cloneable is ICloneable, Initializable {
      * This function uses the create opcode, which should never revert.
      */
     function clone() public returns (address instance) {
-        instance = parent.clone();
-        emit CloneDeployed(msg.sender, parent, instance, 0x0);
+        instance = progenitor.clone();
+        emit CloneDeployed(msg.sender, progenitor, instance, 0x0);
+        _afterClone(msg.sender, progenitor, instance, 0x0);
     }
 
     /**
@@ -35,21 +42,32 @@ abstract contract Cloneable is ICloneable, Initializable {
      * the clones cannot be deployed twice at the same address.
      */
     function cloneDeterministic(bytes32 salt) public returns (address instance) {
-        instance = parent.cloneDeterministic(salt);
-        emit CloneDeployed(msg.sender, parent, instance, salt);
+        instance = progenitor.cloneDeterministic(salt);
+        emit CloneDeployed(msg.sender, progenitor, instance, salt);
+        _afterClone(msg.sender, progenitor, instance, salt);
     }
 
     /**
      * @dev Returns if this contract is a clone
      */
     function isClone() public view returns (bool) {
-        return address(this) != parent;
+        return address(this) != progenitor;
     }
 
     /**
      * @dev Computes the address of a clone deployed using {Clones-cloneDeterministic}.
      */
     function predictDeterministicAddress(bytes32 salt) public view returns (address instance) {
-        instance = parent.predictDeterministicAddress(salt);
+        instance = progenitor.predictDeterministicAddress(salt);
     }
+
+    /**
+     * @dev hook that is ran after cloning
+     */
+    function _afterClone(
+        address deployer,
+        address _progenitor,
+        address _clone,
+        bytes32 salt
+    ) internal virtual {}
 }

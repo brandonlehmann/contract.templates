@@ -1,54 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "../../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "../../@openzeppelin/contracts/access/Ownable.sol";
-import "../Cloneable/Cloneable.sol";
+import "../libraries/Random.sol";
 import "../interfaces/ISimpleRNG.sol";
 
-contract SimpleRNG is ISimpleRNG, Cloneable, Ownable {
-    uint256 public constant VERSION = 2022042301;
+contract SimpleRNG is ISimpleRNG {
+    using Random for uint256;
 
-    address[] public feeds;
-
-    constructor() {
-        _transferOwnership(address(0));
-    }
-
-    function addFeed(address feed) public onlyOwner {
-        require(AggregatorV3Interface(feed).version() != 0, "Does not appear to be a chainlink feed");
-        feeds.push(feed);
-    }
+    uint256 public constant VERSION = 2022042501;
 
     function getEntropy() public view returns (bytes32) {
-        bytes32[] memory tmp = new bytes32[](feeds.length);
-
-        for (uint8 i = 0; i < feeds.length; i++) {
-            (
-                uint80 roundId,
-                int256 answer,
-                uint256 startedAt,
-                uint256 updatedAt,
-                uint80 answeredInRound
-            ) = AggregatorV3Interface(feeds[i]).latestRoundData();
-            tmp[i] = keccak256(abi.encodePacked(roundId, answer, startedAt, updatedAt, answeredInRound));
-        }
-
-        return keccak256(abi.encodePacked(address(this), tmp));
+        return Random.getEntropy();
     }
 
-    function getRandom() public view returns (bytes32) {
-        return keccak256(abi.encodePacked(getEntropy(), block.number, block.timestamp, msg.sender, block.difficulty));
+    function getRandom() public view returns (uint256) {
+        return getRandom(type(uint256).max - 1);
     }
 
-    function getRandom(uint256 seed) public view returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(getEntropy(), block.number, block.timestamp, msg.sender, block.difficulty, seed)
-            );
+    function getRandom(uint256 maximumValue) public view returns (uint256) {
+        return maximumValue.randomize(maximumValue);
     }
 
-    function initialize() public initializer {
-        _transferOwnership(_msgSender());
+    function getRandom(uint256 maximumValue, bytes32 entropy) public view returns (uint256) {
+        return maximumValue.randomizeWithEntropy(entropy, maximumValue);
     }
 }

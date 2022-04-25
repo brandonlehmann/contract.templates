@@ -7,9 +7,11 @@ import "../Cloneable/Cloneable.sol";
 import "../interfaces/IERC721Snapshot.sol";
 
 contract ERC721Snapshot is IERC721Snapshot, Cloneable, Ownable {
-    uint256 public constant VERSION = 2022042301;
+    uint256 public constant VERSION = 2022042501;
 
-    event SnapshotCompleted(uint256 indexed count);
+    event SnapshotCompleted(address indexed _contract, uint256 indexed count);
+    event SnapshotInitialized(address indexed _contract, uint256 indexed totalSupply);
+    event SnapshotProgress(uint256 indexed _oldPosition, uint256 indexed _newPosition);
 
     address[] public holders;
     IERC721Enumerable public CONTRACT;
@@ -35,9 +37,11 @@ contract ERC721Snapshot is IERC721Snapshot, Cloneable, Ownable {
      * @dev initializes the snapshot from the specified ERC721 contract
      */
     function initialize(IERC721Enumerable ERC721Contract) public initializer {
+        require(ERC721Contract.totalSupply() != 0, "ERC721Enumerable: Contract has no totalSupply");
         CONTRACT = ERC721Contract;
         totalSupply = CONTRACT.totalSupply();
         _transferOwnership(_msgSender());
+        emit SnapshotInitialized(address(CONTRACT), totalSupply);
     }
 
     /**
@@ -47,11 +51,14 @@ contract ERC721Snapshot is IERC721Snapshot, Cloneable, Ownable {
         return holders.length;
     }
 
+    /**
+     * @dev Progresses through the snapshot up to the maximum number of specified loop iterations
+     */
     function snapshot(uint256 maxCount) public notCompleted onlyOwner returns (bool) {
         _snapshot(maxCount);
 
         if (completed()) {
-            emit SnapshotCompleted(holders.length);
+            emit SnapshotCompleted(address(CONTRACT), holders.length);
             return true;
         }
 
@@ -59,6 +66,7 @@ contract ERC721Snapshot is IERC721Snapshot, Cloneable, Ownable {
     }
 
     function _snapshot(uint256 maxCount) internal {
+        uint256 old = snapshotPosition;
         uint256 count;
         for (snapshotPosition; snapshotPosition < totalSupply; snapshotPosition++) {
             if (++count > maxCount) {
@@ -67,5 +75,6 @@ contract ERC721Snapshot is IERC721Snapshot, Cloneable, Ownable {
 
             holders.push(CONTRACT.ownerOf(CONTRACT.tokenByIndex(snapshotPosition)));
         }
+        emit SnapshotProgress(old, snapshotPosition);
     }
 }

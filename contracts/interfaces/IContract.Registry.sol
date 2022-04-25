@@ -8,15 +8,17 @@ interface IContractRegistry is ICloneable {
 
     function available() external view returns (string[] memory);
 
-    function get(string memory name) external view returns (address);
+    function get(bytes memory value) external view returns (address);
 
-    function get(string memory name, uint256 version) external view returns (address);
+    function get(bytes memory value, uint256 version) external view returns (address);
 
-    function get(bytes32 _hash) external view returns (address);
+    function getByName(string memory name) external view returns (address);
 
-    function get(bytes32 _hash, uint256 version) external view returns (address);
+    function getByName(string memory name, uint256 version) external view returns (address);
 
-    function hash(string memory name) external pure returns (bytes32);
+    function getByHash(bytes32 _hash) external view returns (address);
+
+    function getByHash(bytes32 _hash, uint256 version) external view returns (address);
 
     function initialize() external;
 

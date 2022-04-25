@@ -1,20 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./ICloneable.sol";
+import "./IRNG.sol";
 
-interface ISimpleRNG is ICloneable {
-    function addFeed(address feed) external;
-
-    function feeds(uint256) external view returns (address);
-
-    function getEntropy() external view returns (bytes32);
-
-    function getRandom() external view returns (bytes32);
-
-    function getRandom(uint256 seed) external view returns (bytes32);
-
-    function initialize() external;
-
+interface ISimpleRNG is IRNG {
     function VERSION() external view returns (uint256);
 }

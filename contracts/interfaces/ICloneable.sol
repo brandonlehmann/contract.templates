@@ -8,7 +8,7 @@ interface ICloneable {
 
     function isClone() external view returns (bool);
 
-    function parent() external view returns (address);
-
     function predictDeterministicAddress(bytes32 salt) external view returns (address);
+
+    function progenitor() external view returns (address);
 }

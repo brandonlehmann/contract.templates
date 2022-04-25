@@ -43,7 +43,6 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     using Strings for uint256;
 
     uint256 public constant VERSION = 2022042401;
-    bytes32 private constant PAYMENT_SPLITTER = keccak256(abi.encodePacked("PaymentSplitter"));
 
     event ChangeBurnedResupply(bool indexed _old, bool indexed _new);
     event ChangeMintPrice(uint256 indexed _old, uint256 indexed _new);
@@ -68,7 +67,6 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
         TokenType tokenType
     );
     event NullInitialized();
-    event PaymentSplitterDeployed(address indexed _contract);
 
     // fee settings
     uint256 private _MINT_PRICE;
@@ -101,8 +99,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     }
 
     constructor() ERC721("", "") {
-        BASE_PAYMENT_SPLITTER = IPaymentSplitter(FTMContractRegistry.get(PAYMENT_SPLITTER));
-        emit PaymentSplitterDeployed(address(BASE_PAYMENT_SPLITTER));
+        BASE_PAYMENT_SPLITTER = IPaymentSplitter(FTMContractRegistry.get("PaymentSplitter"));
         _transferOwnership(address(0));
     }
 

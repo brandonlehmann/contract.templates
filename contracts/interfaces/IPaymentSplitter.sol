@@ -4,6 +4,11 @@ pragma solidity ^0.8.10;
 import "../interfaces/ICloneable.sol";
 
 interface IPaymentSplitter is ICloneable {
+    struct PayeeInformation {
+        address account;
+        uint256 shares;
+    }
+
     function initialize() external;
 
     function initialize(address[] memory payees, uint256[] memory shares_) external;
@@ -25,6 +30,8 @@ interface IPaymentSplitter is ICloneable {
     function released(address token, address account) external view returns (uint256);
 
     function payee(uint256 index) external view returns (address);
+
+    function payees() external view returns (PayeeInformation[] memory);
 
     function pending(address account) external view returns (uint256);
 
