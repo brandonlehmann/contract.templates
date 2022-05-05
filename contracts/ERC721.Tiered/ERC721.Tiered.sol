@@ -4,12 +4,11 @@ pragma solidity ^0.8.10;
 import "../../@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "../../@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
-import "../../@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "../../@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "../../@openzeppelin/contracts/access/Ownable.sol";
+import "../../@openzeppelin/contracts/security/Pausable.sol";
 import "../Cloneable/Cloneable.sol";
-import "../interfaces/IPaymentSplitter.sol";
-import "../interfaces/IContract.Registry.sol";
+import "../PaymentSplitter/PaymentSplitter.sol";
 
 enum TokenType {
     NATIVE,
@@ -37,17 +36,20 @@ interface IFactoryNFT is ICloneable {
     function transferOwnership(address newOwner) external;
 }
 
-contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721Burnable, Ownable, Cloneable {
+contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Burnable, Ownable, Pausable, Cloneable {
     using Address for address;
     using SafeERC20 for IERC20;
     using Strings for uint256;
 
-    uint256 public constant VERSION = 2022042401;
+    uint256 public constant VERSION = 2022050501;
 
     event ChangeBurnedResupply(bool indexed _old, bool indexed _new);
+    event ChangeMaxMint(uint256 indexed _old, uint256 indexed _new);
+    event ChangeMaxPerWallet(uint256 indexed _old, uint256 indexed _new);
     event ChangeMintPrice(uint256 indexed _old, uint256 indexed _new);
     event ChangeWhitelistDiscountBasis(uint96 indexed _old, uint256 indexed _new);
     event ChangeWhitelist(address indexed _account, bool _old, bool _new);
+    event ChangeWhitelistState(bool indexed _old, bool indexed _new);
     event ChangePermittedContract(address indexed _contract, bool _old, bool _new);
     event ChangeMaxSupply(uint256 indexed _old, uint256 indexed _new);
     event ChangeRoyalty(address indexed receiver, uint96 indexed basisPoints);
@@ -79,7 +81,10 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
 
     mapping(address => bool) public whitelist;
     mapping(address => bool) public permittedContractRecipient;
+    bool public WHITELIST_OPEN = false;
     uint256 public MAX_SUPPLY;
+    uint256 public MAX_MINT;
+    uint256 public MAX_PER_WALLET;
     uint256 public totalMinted;
     bool public BURNED_RESUPPLY = false;
 
@@ -99,7 +104,9 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
     }
 
     constructor() ERC721("", "") {
-        BASE_PAYMENT_SPLITTER = IPaymentSplitter(FTMContractRegistry.get("PaymentSplitter"));
+        BASE_PAYMENT_SPLITTER = new PaymentSplitter();
+        BASE_PAYMENT_SPLITTER.initialize();
+        BASE_PAYMENT_SPLITTER.transferOwnership(address(0));
         _transferOwnership(address(0));
     }
 
@@ -134,8 +141,22 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
 
     /****** PUBLIC METHODS ******/
 
-    function mint(uint256 count) public payable whenNotPaused whenProceedsRecipientSet returns (uint256[] memory) {
+    function mint(uint256 count) public payable whenProceedsRecipientSet returns (uint256[] memory) {
+        if (paused()) {
+            require(WHITELIST_OPEN && whitelist[_msgSender()], "ERC721: Paused");
+        }
+
         require(count != 0, "ERC721: Must mint at least one");
+        if (MAX_MINT != 0) {
+            require(
+                count <= MAX_MINT,
+                string(abi.encodePacked("ERC721: Cannot mint more than ", MAX_MINT.toString(), " at a time"))
+            );
+        }
+        if (MAX_PER_WALLET != 0) {
+            require(balanceOf(_msgSender()) + count <= MAX_PER_WALLET, "ERC721: Mint exceeds per wallet maximum");
+        }
+
         uint256 mintCost = MINT_PRICE() * count;
 
         if (TOKEN_TYPE == TokenType.ERC20) {
@@ -183,7 +204,7 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
 
     function MINT_PRICE() public view returns (uint256) {
         if (TOKEN_TYPE != TokenType.ERC721) {
-            if (whitelist[_msgSender()]) {
+            if (whitelist[_msgSender()] && WHITELIST_OPEN) {
                 return _MINT_PRICE - ((_MINT_PRICE * WHITELIST_DISCOUNT_BASIS) / 10_000);
             } else {
                 return _MINT_PRICE;
@@ -225,6 +246,18 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
         bool old = BURNED_RESUPPLY;
         BURNED_RESUPPLY = state;
         emit ChangeBurnedResupply(old, state);
+    }
+
+    function setMaxMint(uint256 maxMint) public onlyOwner {
+        uint256 old = MAX_MINT;
+        MAX_MINT = maxMint;
+        emit ChangeMaxMint(old, maxMint);
+    }
+
+    function setMaxPerWallet(uint256 maxPerWallet) public onlyOwner {
+        uint256 old = MAX_PER_WALLET;
+        MAX_PER_WALLET = maxPerWallet;
+        emit ChangeMaxPerWallet(old, maxPerWallet);
     }
 
     function setMaxSupply(uint256 maxSupply) public onlyOwner {
@@ -276,6 +309,12 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
         bool old = whitelist[account];
         whitelist[account] = state;
         emit ChangeWhitelist(account, old, state);
+    }
+
+    function setWhitelistState(bool state) public onlyOwner {
+        bool old = WHITELIST_OPEN;
+        WHITELIST_OPEN = state;
+        emit ChangeWhitelistState(old, state);
     }
 
     function setWhitelistDiscountBasis(uint96 basisPoints) public onlyOwner {
@@ -330,9 +369,11 @@ contract ERC721Tiered is ERC721Enumerable, ERC721Royalty, ERC721Pausable, ERC721
         address from,
         address to,
         uint256 tokenId
-    ) internal override(ERC721, ERC721Enumerable, ERC721Pausable) {
+    ) internal override(ERC721, ERC721Enumerable) {
         if (to.isContract()) {
             require(permittedContractRecipient[to], "ERC721: Contract not whitelisted for transfers");
+        } else if (MAX_PER_WALLET != 0 && to != address(0) && to != address(1)) {
+            require(balanceOf(to) + 1 <= MAX_PER_WALLET, "ERC721: Transfer exceeds maximum per wallet");
         }
 
         super._beforeTokenTransfer(from, to, tokenId);
