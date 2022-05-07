@@ -3,7 +3,7 @@ import { Contract, ContractTransaction, utils } from 'ethers';
 import assert from 'assert';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-describe('Unit Tests', async () => {
+describe('NFT Vending Machine', async () => {
     let deployer: SignerWithAddress;
     let ERC721Mock1: Contract;
     let ERC721Mock2: Contract;
