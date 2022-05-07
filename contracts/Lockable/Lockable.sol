@@ -6,8 +6,8 @@ import "../../@openzeppelin/contracts/utils/Context.sol";
 abstract contract Lockable is Context {
     bool private _locked;
 
-    event Locked(address indexed caller, uint256 blockNumber);
-    event Unlocked(address indexed caller, uint256 blockNumber);
+    event Locked(address indexed caller);
+    event Unlocked(address indexed caller);
 
     modifier whenNotLocked() {
         require(!_locked, "Contract is locked");
@@ -25,11 +25,11 @@ abstract contract Lockable is Context {
 
     function _lock() internal whenNotLocked {
         _locked = true;
-        emit Locked(_msgSender(), block.number);
+        emit Locked(_msgSender());
     }
 
     function _unlock() internal whenLocked {
         _locked = false;
-        emit Unlocked(_msgSender(), block.number);
+        emit Unlocked(_msgSender());
     }
 }

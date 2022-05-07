@@ -28,10 +28,19 @@ abstract contract Cloneable is ICloneable, Initializable {
      *
      * This function uses the create opcode, which should never revert.
      */
-    function clone() public returns (address instance) {
+    function _clone() internal returns (address instance) {
         instance = progenitor.clone();
         emit CloneDeployed(msg.sender, progenitor, instance, 0x0);
         _afterClone(msg.sender, progenitor, instance, 0x0);
+    }
+
+    /**
+     * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
+     *
+     * This function uses the create opcode, which should never revert.
+     */
+    function clone() public virtual returns (address instance) {
+        return _clone();
     }
 
     /**
@@ -41,10 +50,21 @@ abstract contract Cloneable is ICloneable, Initializable {
      * the clone. Using the same `implementation` and `salt` multiple time will revert, since
      * the clones cannot be deployed twice at the same address.
      */
-    function cloneDeterministic(bytes32 salt) public returns (address instance) {
+    function _cloneDeterministic(bytes32 salt) internal returns (address instance) {
         instance = progenitor.cloneDeterministic(salt);
         emit CloneDeployed(msg.sender, progenitor, instance, salt);
         _afterClone(msg.sender, progenitor, instance, salt);
+    }
+
+    /**
+     * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
+     *
+     * This function uses the create2 opcode and a `salt` to deterministically deploy
+     * the clone. Using the same `implementation` and `salt` multiple time will revert, since
+     * the clones cannot be deployed twice at the same address.
+     */
+    function cloneDeterministic(bytes32 salt) public virtual returns (address instance) {
+        return _cloneDeterministic(salt);
     }
 
     /**
@@ -67,7 +87,7 @@ abstract contract Cloneable is ICloneable, Initializable {
     function _afterClone(
         address deployer,
         address _progenitor,
-        address _clone,
+        address clone_,
         bytes32 salt
     ) internal virtual {}
 }
