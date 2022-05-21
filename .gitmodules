@@ -13,3 +13,9 @@
 [submodule "@chainlink"]
 	path = @chainlink
 	url = https://github.com/brandonlehmann/chainlink
+[submodule "@uniswap-v2-periphery"]
+	path = @uniswap-v2-periphery
+	url = https://github.com/Uniswap/v2-periphery.git
+[submodule "@uniswap-v3-periphery"]
+	path = @uniswap-v3-periphery
+	url = https://github.com/Uniswap/v3-periphery.git
