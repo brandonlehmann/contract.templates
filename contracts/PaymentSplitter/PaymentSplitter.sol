@@ -77,6 +77,10 @@ contract PaymentSplitter is IPaymentSplitter, Cloneable, Ownable {
         _transferOwnership(_msgSender());
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     /**
      * @dev Adds another payee to the `PaymentSplitter` with the specified number of `shares`
      * for the `payee`

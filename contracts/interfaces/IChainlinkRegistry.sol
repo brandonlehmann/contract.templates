@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./ICloneable.sol";
-
-interface IChainlinkRegistry is ICloneable {
+interface IChainlinkRegistry {
     struct ChainlinkFeed {
         string symbol;
         address asset;
@@ -16,6 +14,8 @@ interface IChainlinkRegistry is ICloneable {
         string memory symbol,
         bool lookupSymbol
     ) external;
+
+    function clone() external returns (address);
 
     function count() external view returns (uint256);
 

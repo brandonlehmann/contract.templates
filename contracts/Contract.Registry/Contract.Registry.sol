@@ -25,6 +25,10 @@ contract ContractRegistry is Ownable, Cloneable, IContractRegistry {
         _transferOwnership(address(0));
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     function add(string memory name, address _contract) public onlyOwner {
         require(_contract.isContract(), "Not a contract");
         uint256 version = IContract(_contract).VERSION();

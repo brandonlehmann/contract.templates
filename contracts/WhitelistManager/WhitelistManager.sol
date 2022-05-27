@@ -29,6 +29,10 @@ contract WhitelistManager is IWhitelistManager, Cloneable, Ownable, Pausable {
         _transferOwnership(_msgSender());
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     /**
      * @dev adds an account to the whitelist with the specified count
      */

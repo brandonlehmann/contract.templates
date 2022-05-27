@@ -29,6 +29,10 @@ contract ChainlinkPriceOracle is IPriceOracle, Cloneable, Ownable {
         _transferOwnership(_msgSender());
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     function getSafePrice(address _feed) public view returns (uint256 _amountOut) {
         return getCurrentPrice(_feed);
     }

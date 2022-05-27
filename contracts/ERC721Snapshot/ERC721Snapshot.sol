@@ -44,6 +44,10 @@ contract ERC721Snapshot is IERC721Snapshot, Cloneable, Ownable {
         emit SnapshotInitialized(address(CONTRACT), totalSupply);
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     /**
      * @dev returns the number of holders found when the snapshot was taken
      */

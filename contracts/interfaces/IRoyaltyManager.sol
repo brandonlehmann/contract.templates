@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./ICloneable.sol";
 import "./IPaymentSplitter.sol";
 
-interface IRoyaltyManager is ICloneable {
+interface IRoyaltyManager {
     function PAYMENT_SPLITTER() external view returns (IPaymentSplitter);
+
+    function clone() external returns (address);
 
     function baseRoyaltyReceiver() external view returns (IPaymentSplitter);
 

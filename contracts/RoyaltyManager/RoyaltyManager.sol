@@ -48,6 +48,10 @@ contract RoyaltyManager is IRoyaltyManager, Cloneable, Ownable {
         emit RoyaltyManagerInitialized(address(baseRoyaltyReceiver), accounts, shares);
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     /**
      * @dev returns the address of a royalty receiver constructed for the
      * specified account with the number of shares specified

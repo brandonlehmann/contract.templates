@@ -30,6 +30,10 @@ contract ChainlinkRegistry is IChainlinkRegistry, Cloneable, Ownable {
         _transferOwnership(_msgSender());
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     function add(
         address feed,
         address asset,

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./ICloneable.sol";
-
-interface IContractRegistry is ICloneable {
+interface IContractRegistry {
     function add(string memory name, address _contract) external;
 
     function available() external view returns (string[] memory);
+
+    function clone() external returns (address);
 
     function get(bytes memory value) external view returns (address);
 

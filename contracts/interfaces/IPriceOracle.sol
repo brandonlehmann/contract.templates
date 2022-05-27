@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./ICloneable.sol";
-
-interface IPriceOracle is ICloneable {
+interface IPriceOracle {
     function initialize() external;
 
     function initialize(address, uint256) external;
+
+    function clone() external returns (address);
 
     function getSafePrice(address token) external view returns (uint256 _amountOut);
 

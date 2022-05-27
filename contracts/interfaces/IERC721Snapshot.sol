@@ -2,9 +2,10 @@
 pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
-import "./ICloneable.sol";
 
-interface IERC721Snapshot is ICloneable {
+interface IERC721Snapshot {
+    function clone() external returns (address);
+
     function completed() external view returns (bool);
 
     function initialize() external;

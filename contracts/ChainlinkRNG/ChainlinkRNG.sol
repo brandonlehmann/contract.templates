@@ -23,6 +23,10 @@ contract ChainlinkRNG is IChainlinkRNG, Cloneable, Ownable {
         feeds.push(feed);
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     function getEntropy() public view returns (bytes32) {
         bytes32[] memory tmp = new bytes32[](feeds.length);
 

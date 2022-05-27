@@ -61,6 +61,10 @@ contract UniswapV2TWAPOracle is IPriceOracle, Cloneable {
         }
     }
 
+    function clone() public returns (address) {
+        return _clone();
+    }
+
     /****** OPERATIONAL METHODS ******/
 
     /**

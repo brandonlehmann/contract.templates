@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./ICloneable.sol";
-
-interface IBlockTimeTracker is ICloneable {
+interface IBlockTimeTracker {
     function initialize() external;
+
+    function clone() external returns (address);
 
     function startBlock() external view returns (uint256);
 

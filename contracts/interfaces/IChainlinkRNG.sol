@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./ICloneable.sol";
 import "./IRNG.sol";
 
-interface IChainlinkRNG is ICloneable, IRNG {
+interface IChainlinkRNG is IRNG {
     function addFeed(address feed) external;
+
+    function clone() external returns (address);
 
     function feeds(uint256) external view returns (address);
 

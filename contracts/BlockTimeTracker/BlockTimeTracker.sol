@@ -22,6 +22,13 @@ contract BlockTimeTracker is IBlockTimeTracker, Cloneable, Ownable {
     }
 
     /**
+     * @dev clones the contract into a new instance
+     */
+    function clone() public returns (address) {
+        return _clone();
+    }
+
+    /**
      * @dev internal method that does quick division using the set precision
      */
     function divide(
