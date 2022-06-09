@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
-import "../Cloneable/Cloneable.sol";
+import "../abstracts/Cloneable.sol";
 import "../interfaces/IERC721Snapshot.sol";
 
 contract ERC721Snapshot is IERC721Snapshot, Cloneable, Ownable {

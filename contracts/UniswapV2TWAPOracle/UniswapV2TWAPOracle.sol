@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import "../../@solidity-lib/contracts/libraries/FixedPoint.sol";
 import "../../@uniswap-v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "../../@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "../Cloneable/Cloneable.sol";
+import "../abstracts/Cloneable.sol";
 import "../interfaces/IPriceOracle.sol";
 
 /**

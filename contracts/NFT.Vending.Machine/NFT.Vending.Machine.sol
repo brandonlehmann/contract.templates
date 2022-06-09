@@ -9,7 +9,7 @@ import "../../@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/security/Pausable.sol";
-import "../Cloneable/Cloneable.sol";
+import "../abstracts/Cloneable.sol";
 import "../PaymentSplitter/PaymentSplitter.sol";
 import "../libraries/Random.sol";
 
@@ -88,7 +88,7 @@ contract NFTVendingMachine is IERC721Receiver, IERC1155Receiver, Cloneable, Paus
     /****** CONSTRUCTOR METHOD ******/
 
     constructor() {
-        BASE_PAYMENT_SPLITTER = new PaymentSplitter();
+        BASE_PAYMENT_SPLITTER = IPaymentSplitter(address(new PaymentSplitter()));
         BASE_PAYMENT_SPLITTER.initialize();
         BASE_PAYMENT_SPLITTER.transferOwnership(address(0));
         // On construction, ownership is transferred to NULL address

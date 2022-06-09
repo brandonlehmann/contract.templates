@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../Cloneable/Cloneable.sol";
+import "../abstracts/Cloneable.sol";
 import "../PaymentSplitter/PaymentSplitter.sol";
 import "../interfaces/IRoyaltyManager.sol";
 
@@ -29,7 +29,7 @@ contract RoyaltyManager is IRoyaltyManager, Cloneable, Ownable {
     mapping(uint256 => address) public tokenRoyaltyReceiver;
 
     constructor() {
-        PAYMENT_SPLITTER = new PaymentSplitter();
+        PAYMENT_SPLITTER = IPaymentSplitter(address(new PaymentSplitter()));
         PAYMENT_SPLITTER.initialize();
         _transferOwnership(address(0));
         emit PaymentSplitterDeployed(address(PAYMENT_SPLITTER));

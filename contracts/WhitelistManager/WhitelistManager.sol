@@ -5,7 +5,7 @@ import "../../@openzeppelin/contracts/security/Pausable.sol";
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IWhitelistManager.sol";
-import "../Cloneable/Cloneable.sol";
+import "../abstracts/Cloneable.sol";
 
 contract WhitelistManager is IWhitelistManager, Cloneable, Ownable, Pausable {
     using EnumerableSet for EnumerableSet.AddressSet;

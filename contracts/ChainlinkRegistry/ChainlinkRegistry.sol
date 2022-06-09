@@ -5,7 +5,7 @@ import "../../@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol
 import "../../@openzeppelin/contracts/access/Ownable.sol";
 import "../../@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../Cloneable/Cloneable.sol";
+import "../abstracts/Cloneable.sol";
 import "../interfaces/IChainlinkRegistry.sol";
 
 contract ChainlinkRegistry is IChainlinkRegistry, Cloneable, Ownable {

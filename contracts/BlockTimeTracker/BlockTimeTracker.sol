@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "../../@openzeppelin/contracts/access/Ownable.sol";
-import "../Cloneable/Cloneable.sol";
+import "../abstracts/Cloneable.sol";
 import "../interfaces/IBlockTimeTracker.sol";
 
 contract BlockTimeTracker is IBlockTimeTracker, Cloneable, Ownable {

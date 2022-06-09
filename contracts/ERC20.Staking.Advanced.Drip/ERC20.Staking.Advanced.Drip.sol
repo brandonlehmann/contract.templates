@@ -5,13 +5,13 @@ import "../../@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../../@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../../@openzeppelin/contracts/access/Ownable.sol";
-import "../Cloneable/Cloneable.sol";
-import "../libraries/ERC20Math.sol";
+import "../abstracts/Cloneable.sol";
+import "../libraries/ERC20Helper.sol";
 
 contract ERC20AdvancedDrip is Ownable, Cloneable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
-    using ERC20Math for address;
+    using ERC20Helper for address;
 
     event ChangeRewardWallet(address indexed _old, address indexed _new);
     event Claim(address indexed account, address indexed asset, address indexed reward, uint256 amount);
@@ -127,7 +127,7 @@ contract ERC20AdvancedDrip is Ownable, Cloneable {
         // calculates the rate per unit for the staked asset
         // ie. $50 per day is $0.000578703703704 per second
         // 0.000578703703704 per second / 100 units staked = $0.000005787037037 per unit per second
-        return (assetRewards[asset].dripRate / asset.fromAtomicUnits(assetRewards[asset].staked));
+        return (assetRewards[asset].dripRate / asset.weiToWholeUnits(assetRewards[asset].staked));
     }
 
     function rewardToken(address asset) public view returns (address) {
@@ -320,6 +320,6 @@ contract ERC20AdvancedDrip is Ownable, Cloneable {
         }
 
         // calculate how much is claimable as the product of the rate, time, and amount staked
-        return rewardRate(asset) * delta * asset.fromAtomicUnits(stakeInfo[account][asset].balance);
+        return rewardRate(asset) * delta * asset.weiToWholeUnits(stakeInfo[account][asset].balance);
     }
 }
