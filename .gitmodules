@@ -19,3 +19,6 @@
 [submodule "@uniswap-v3-periphery"]
 	path = @uniswap-v3-periphery
 	url = https://github.com/Uniswap/v3-periphery.git
+[submodule "@layerzero"]
+	path = @layerzero
+	url = https://github.com/LayerZero-Labs/LayerZero.git
