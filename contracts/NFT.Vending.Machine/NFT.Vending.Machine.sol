@@ -90,7 +90,7 @@ contract NFTVendingMachine is IERC721Receiver, IERC1155Receiver, Cloneable, Paus
     constructor() {
         BASE_PAYMENT_SPLITTER = IPaymentSplitter(address(new PaymentSplitter()));
         BASE_PAYMENT_SPLITTER.initialize();
-        BASE_PAYMENT_SPLITTER.transferOwnership(address(0));
+        BASE_PAYMENT_SPLITTER.renounceOwnership();
         // On construction, ownership is transferred to NULL address
         _transferOwnership(address(0));
     }
@@ -132,6 +132,10 @@ contract NFTVendingMachine is IERC721Receiver, IERC1155Receiver, Cloneable, Paus
     }
 
     /****** PUBLIC METHODS ******/
+
+    function clone() public returns (address) {
+        return _clone();
+    }
 
     function draw()
         public
@@ -271,7 +275,7 @@ contract NFTVendingMachine is IERC721Receiver, IERC1155Receiver, Cloneable, Paus
             proceedsReceiver.addPayee(collectionBeneficiary[collection], shares);
         }
 
-        proceedsReceiver.transferOwnership(address(0)); // renounce the ownership of the payment splitter
+        proceedsReceiver.renounceOwnership(); // renounce the ownership of the payment splitter
 
         _unpause(); // unpause the contract, thereby opening up the drawing
 
