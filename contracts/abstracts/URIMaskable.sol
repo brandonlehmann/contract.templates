@@ -28,7 +28,7 @@ abstract contract URIMaskable is Context {
     }
 
     modifier onlyMaskService() {
-        require(_msgSender() == _URI_SERVICE, "Not masking service");
+        require(_msgSender() == _URI_SERVICE, "caller not masking service");
         _;
     }
 
@@ -55,9 +55,17 @@ abstract contract URIMaskable is Context {
         return uint256(keccak256(abi.encodePacked(_RANDOM_SEED, tokenId))).toHexString(32);
     }
 
+    function _getRandomSeed() internal view onlyMaskService returns (uint256) {
+        return _RANDOM_SEED;
+    }
+
     function _setMaskingService(address service) internal {
         address old = _URI_SERVICE;
         _URI_SERVICE = service;
         emit ChangeURIService(old, service);
+    }
+
+    function _setRandomSeed(uint256 seed) internal onlyMaskService {
+        _RANDOM_SEED = seed;
     }
 }

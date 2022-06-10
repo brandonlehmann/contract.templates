@@ -7,6 +7,8 @@ import "../../@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol
 import "../../@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";
 import "./NonblockingLzApp.sol";
 import "./Cloneable.sol";
+import "./URIMaskable.sol";
+import "./ClampedRandomizer.sol";
 import "../interfaces/IERC721.Omnichain.sol";
 
 abstract contract ERC721Omnichain is
@@ -14,10 +16,17 @@ abstract contract ERC721Omnichain is
     ERC721Pausable,
     ERC721Royalty,
     ERC721Burnable,
+    URIMaskable,
+    ClampedRandomizer,
     NonblockingLzApp,
     Cloneable,
     IERC721Omnichain
 {
+    modifier originIsSender() {
+        require(tx.origin == _msgSender());
+        _;
+    }
+
     /**
      * @dev estimate send token `_tokenId` to (`_dstChainId`, `_toAddress`)
      * _dstChainId - L0 defined chain id to send tokens too
@@ -194,4 +203,7 @@ abstract contract ERC721Omnichain is
             interfaceId == type(IERC721Omnichain).interfaceId ||
             super.supportsInterface(interfaceId);
     }
+
+    // default receive function
+    receive() external payable virtual {}
 }

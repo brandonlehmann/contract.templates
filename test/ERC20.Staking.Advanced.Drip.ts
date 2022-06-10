@@ -21,13 +21,13 @@ describe('ERC20 Staking Advanced Drip', async () => {
         [deployer, user, user2] = await ethers.getSigners();
 
         {
-            const factory = await ethers.getContractFactory('ERC20Mock');
+            const factory = await ethers.getContractFactory('contracts/Mocks/ERC20.Mock.sol:ERC20Mock');
             ERC20Mock1 = await factory.deploy('TEST1', 'TEST1', 18, deployer.address, InitialBalance);
             await ERC20Mock1.deployed();
         }
 
         {
-            const factory = await ethers.getContractFactory('ERC20Mock');
+            const factory = await ethers.getContractFactory('contracts/Mocks/ERC20.Mock.sol:ERC20Mock');
             ERC20Mock2 = await factory.deploy('TEST2', 'TEST2', 18, deployer.address, InitialBalance);
             await ERC20Mock2.deployed();
         }
