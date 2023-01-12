@@ -1,12 +1,13 @@
 import { HardhatUserConfig } from 'hardhat/config';
-import '@nomiclabs/hardhat-ethers';
+import '@nomicfoundation/hardhat-toolbox';
+import '@nomiclabs/hardhat-vyper';
 import '@openzeppelin/hardhat-upgrades';
+import 'hardhat-abi-exporter';
+import 'hardhat-gas-reporter';
 import { config as dotenv } from 'dotenv';
-import '@nomiclabs/hardhat-waffle';
 import { resolve } from 'path';
 
 dotenv();
-
 export const config: HardhatUserConfig = {
     solidity: {
         version: '0.8.10',
