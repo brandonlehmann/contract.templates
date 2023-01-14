@@ -11,7 +11,7 @@ contract CompoundInterestCalculator {
     // n = number of periods over which the bps is divided
     // t = the number of periods compounded
     //
-    // A = P[1+(r/n)]^(n*t)
+    // A = P[1+(r/n)]^t
     //
     // returns the total amount in the base unit(s) of the principal
     function calculate(
